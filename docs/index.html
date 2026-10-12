@@ -37,6 +37,10 @@ button.reset{margin-left:auto;font:inherit;font-size:13px;border:1px solid var(-
 .tag.down{background:var(--acc);color:#fff}
 .tag.up{background:var(--up);color:#fff}
 .tag.warn{color:var(--warn)}
+#refresh{font:inherit;font-size:13px;border:1px solid var(--acc);background:var(--acc);color:#fff;border-radius:8px;padding:5px 12px;cursor:pointer}
+#refresh:disabled{opacity:.6;cursor:progress}
+#etat{margin-top:10px;padding:8px 12px;border-radius:10px;background:var(--card);font-size:13px;box-shadow:0 1px 3px #0002}
+#etat.err{color:var(--up)}
 .empty{padding:26px 10px;text-align:center;color:var(--mut)}
 @media(max-width:560px){.thumb{width:96px;height:84px}}
 </style>
@@ -45,8 +49,9 @@ button.reset{margin-left:auto;font:inherit;font-size:13px;border:1px solid var(-
 <div class="wrap">
 <header>
   <h1>⚡ Veille VE — enchères</h1>
-  <span class="meta" id="maj">chargement…</span>
+  <span class="meta"><span id="maj">chargement…</span> <button id="refresh" type="button" hidden>↻ Nouvelle recherche</button></span>
 </header>
+<div id="etat" hidden></div>
 
 <div class="panel">
   <div class="grid">
@@ -243,7 +248,48 @@ async function charger(){
     + 'Le prix est une estimation haute ou l’enchère courante : le prix final peut différer. Vérifie toujours la fiche.';
   rendre();
 }
+// --- Nouvelle recherche : disponible seulement quand la page est servie par serve.py (python3 serve.py) ---
+async function api(chemin, opts){
+  try { return await fetch(chemin, {cache:'no-store', ...opts}); } catch { return null; }
+}
+const duree = ms => { const m = Math.floor(ms / 60000), s = Math.floor(ms / 1000) % 60; return m ? `${m} min ${s} s` : `${s} s`; };
+
+async function suivre(debut){
+  const etat = $('#etat'); etat.hidden = false; etat.className = '';
+  const t0 = debut || Date.now();
+  for (;;) {
+    const r = await api('api/status');
+    if (!r || !r.ok) { etat.className = 'err'; etat.textContent = 'Le serveur local ne répond plus.'; $('#refresh').disabled = false; return; }
+    const s = await r.json();
+    const dernier = (s.log || []).slice(-1)[0] || '';
+    if (s.en_cours) {
+      etat.textContent = `Recherche en cours depuis ${duree(Date.now() - t0)}… ${dernier}`;
+    } else if (s.code === 0 || s.code === null) {
+      etat.textContent = 'Recherche terminée, mise à jour de la page…';
+      setTimeout(() => location.reload(), 1200); return;
+    } else {
+      etat.className = 'err';
+      etat.textContent = `La recherche a échoué (code ${s.code}). ${dernier}`;
+      $('#refresh').disabled = false; return;
+    }
+    await new Promise(ok => setTimeout(ok, 3000));
+  }
+}
+
+async function initRecherche(){
+  const r = await api('api/status');
+  if (!r || !r.ok) return;                       // version publique (GitHub Pages) : pas de bouton
+  const s = await r.json();
+  const btn = $('#refresh'); btn.hidden = false;
+  btn.onclick = async () => {
+    btn.disabled = true;
+    const p = await api('api/refresh', {method:'POST'});
+    if (p && (p.ok || p.status === 409)) suivre(); else { btn.disabled = false; $('#etat').hidden = false; $('#etat').className = 'err'; $('#etat').textContent = 'Impossible de lancer la recherche.'; }
+  };
+  if (s.en_cours) { btn.disabled = true; suivre(); }
+}
 charger();
+initRecherche();
 </script>
 </body>
 </html>
