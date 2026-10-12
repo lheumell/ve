@@ -77,3 +77,4 @@ Achat aux enchères = en l'état, sans essai, paiement comptant sous quelques jo
 Le score trie, il ne remplace pas le rapport d'expertise ni le certificat SoH.
 # ve
 # ve
+# ve
