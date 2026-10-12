@@ -41,11 +41,67 @@ SITES = {
     },
 }
 
+# Frais en sus (TTC), hors carte grise et transport. Relevés sur les CGV Alcopa et sur les conditions des lots.
+FRAIS_SITE = {
+    "vpauto": {"pct": 0.0, "min": 0, "fixe": 285,        # prix « frais de vente inclus » ; dossier VE avec diagnostic batterie
+               "detail": "frais de vente inclus + 285 € de dossier VE"},
+    "alcopa": {"pct": 0.144, "min": 360, "fixe": 185,    # 14,40 % (min 360) + 140 € de frais de vente + 45 € véhicule électrique
+               "detail": "14,4 % (min 360 €) + 185 € de frais fixes"},
+    "interencheres": {"pct": 0.144, "min": 360, "fixe": 185,   # défaut = barème Alcopa, remplacé par celui du lot quand il est lisible
+                      "detail": "14,4 % (min 360 €) + 185 € de frais fixes"},
+}
+
+def _eur(x):
+    return f"{x:,.0f}".replace(",", " ")
+
+def parser_frais_ie(texte, type_vente):
+    """Frais lus dans les conditions de paiement d'un lot Interenchères (None si le texte ne les donne pas)."""
+    t = re.sub(r"\s+", " ", texte or "")
+    if not re.search(r"frais", t, re.I):
+        return None
+    if re.search(r"volontaire", t, re.I) and re.search(r"l[ée]gaux|judiciaire", t, re.I):
+        i = re.search(r"volontaire", t, re.I).start()
+        j = re.search(r"l[ée]gaux|judiciaire", t, re.I).start()
+        t = t[i:] if type_vente == "voluntary" else (t[j:i] if j < i else t[j:])
+    m = re.search(r"(\d{1,2}(?:[.,]\d{1,2})?)\s*%\s*TTC", t, re.I)
+    if not m:
+        return None
+    pct = round(float(m.group(1).replace(",", ".")) / 100, 4)
+    mini = re.search(r"minimum\s+de\s+(\d+)\s*€", t, re.I)
+    fixe = 0
+    for motif in (r"(\d+)\s*€\s*(?:TTC\s*)?de frais de vente\b",
+                  r"(\d+)\s*€\s*(?:TTC\s*)?de frais suppl[ée]mentaires pour tous les v[ée]hicules [ée]lectriques",
+                  r"(\d+)\s*€\s*(?:TTC\s*)?(?:de )?frais de dossiers?"):
+        mm = re.search(motif, t, re.I)
+        if mm:
+            fixe += int(mm.group(1))
+    return {"pct": pct, "min": int(mini.group(1)) if mini else 0, "fixe": fixe}
+
+def calcul_frais(site, prix, frais_lot=None, frais_inclus=False, fixe_fiche=None):
+    """(frais, détail, source) pour un prix d'adjudication. source = « lot » (lu sur le lot) ou « site » (barème du site)."""
+    f, source = dict(FRAIS_SITE[site]), "site"
+    if frais_lot:
+        f.update(frais_lot); source = "lot"
+    if fixe_fiche is not None:
+        f["fixe"], source = fixe_fiche, "lot"
+    if frais_inclus:
+        f["pct"], f["min"] = 0.0, 0
+    detail = (f"{f['pct'] * 100:g}".replace(".", ",") + " %" + (f" (min {_eur(f['min'])} €)" if f["min"] else "") if f["pct"] else "frais de vente inclus") \
+        + (f" + {_eur(f['fixe'])} €" if f["fixe"] else "")
+    if not prix:
+        return None, detail, source
+    return round(max(prix * f["pct"], f["min"] if f["pct"] else 0) + f["fixe"]), detail, source
+
+
 VILLES = {"lille": "59", "rouen": "76", "paris": "75", "lorient": "56", "caudan": "56", "nantes": "44", "lyon": "69",
           "bordeaux": "33", "marseille": "13", "miramas": "13", "rennes": "35", "toulouse": "31", "strasbourg": "67",
           "metz": "57", "nancy": "54", "reims": "51", "amiens": "80", "orleans": "45", "tours": "37", "montpellier": "34",
           "nice": "06", "grenoble": "38", "dijon": "21", "clermont": "63", "le mans": "72", "angers": "49", "caen": "14"}
 MARQUEURS_ELEC = r"electri|kwh|\bev\s?\d*\b|e-?tech|\bid\.?\s?\d"
+# Pas des voitures : cycles, deux-roues, quadricycles / voiturettes sans permis, engins.
+NON_VOITURE = (r"\bv[ée]los?\b|trottinette|scooter|\bmotos?\b|\bquads?\b|cyclomoteur|gyropode|hoverboard|draisienne|"
+               r"\bligier\b|\baixam\b|microcar|chatenet|tracteur|remorque|chariot|\bengin|tondeuse|karting|golfette|"
+               r"sans permis|\bfourgon|\bcamion|utilitaire")
 MARQUEURS_THERMIQUE = r"hybrid|hybride|phev|\bhev\b|plug[\s-]?in|rechargeable|mhev|essence|diesel|gazole|\btdi\b|\bdci\b"
 
 
@@ -163,16 +219,20 @@ def extraire_champs(texte):
                 pass
     return o
 
-def enregistrer(site, ident, url, titre, image, texte, **forces):
+def enregistrer(site, ident, url, titre, image, texte, frais_lot=None, fixe_fiche=None, **forces):
     """Lot au schéma commun. `forces` impose des valeurs lues dans des données structurées."""
     ch = extraire_champs(texte)
     ch.update({k: v for k, v in forces.items() if v is not None})
+    frais, detail, source = calcul_frais(site, ch.get("prix"), frais_lot, ch.get("frais_inclus", False) or site == "vpauto",
+                                         fixe_fiche)
     return {
         "id": f"{site}:{ident}", "site": site, "url": url, "titre": (titre or "").strip()[:120], "image": image,
         "annee": ch.get("annee"), "km": ch.get("km"), "prix": ch.get("prix"), "prix_type": ch.get("prix_type"),
         "mise_a_prix": ch.get("mise_a_prix"), "frais_inclus": ch.get("frais_inclus", False),
         "kwh": ch.get("kwh"), "soh": ch.get("soh"), "ville": ch.get("ville"), "dept": ch.get("dept"),
-        "date_vente": ch.get("date_vente"), "texte": re.sub(r"\s+", " ", texte).strip()[:500],
+        "date_vente": ch.get("date_vente"),
+        "frais_estimes": frais, "cout_estime": (ch["prix"] + frais) if ch.get("prix") and frais is not None else None,
+        "frais_detail": detail, "frais_source": source, "texte": re.sub(r"\s+", " ", texte).strip()[:500],
     }
 
 
@@ -221,7 +281,8 @@ def collecter_vpauto(cfg, debug=False):
         except Exception as e:
             print(f"  ! fiche {l['url']} : {e}")
         lots.append(enregistrer("vpauto", l["ident"], l["url"], fiche.get("titre") or l["texte"][:90], l["image"],
-                                l["texte"], dept=fiche.get("dept"), ville=fiche.get("ville"), kwh=fiche.get("kwh")))
+                                l["texte"], fixe_fiche=fiche.get("frais_dossier"), dept=fiche.get("dept"), ville=fiche.get("ville"),
+                                kwh=fiche.get("kwh")))
         time.sleep(DELAI)
     return lots
 
@@ -237,6 +298,9 @@ def lire_fiche_vpauto(soup):
     m = re.search(r"(\d{2,3}(?:[.,]\d)?)\s*kwh", txt, re.I)
     if m:
         o["kwh"] = float(m.group(1).replace(",", "."))
+    m = re.search(r"frais de dossier[^.€]{0,80}?s['’]?[ée]l[èe]vent\s*[àa]\s*(\d+)\s*€", txt, re.I)
+    if m:
+        o["frais_dossier"] = int(m.group(1))
     return o
 
 
@@ -289,6 +353,8 @@ def est_electrique_ie(it):
     """Électrique pur uniquement : le site déclare parfois « electric » pour des hybrides rechargeables."""
     ch = it.get("characteristics") or {}
     titre = norm(" ".join([(it.get("title_translations") or {}).get("fr-FR") or "", it.get("internal_reference") or ""]))
+    if re.search(NON_VOITURE, titre) or (ch.get("national_type") and ch["national_type"] != "VP"):
+        return False
     if (re.search(MARQUEURS_THERMIQUE, titre) or (ch.get("engine_displacement") or 0) > 0
             or re.search(r"(?<![\d.])[0-3]\.\d(?!\d)(?!\s*k)", titre)):      # « 1.6 », « 2.0 » = cylindrée
         return False
@@ -311,6 +377,7 @@ def lot_interencheres(it, liens):
     annee = (ch.get("first_registration_date") or "")[:4]
     return enregistrer("interencheres", lid, urljoin("https://www.interencheres.com/", liens[lid]), titre,
                        ("https:" + img) if img else None, f"{titre} {desc}".replace("\n", " "),
+                       frais_lot=parser_frais_ie((it.get("conditions") or {}).get("payment"), it.get("type")),
                        annee=int(annee) if annee.isdigit() else None, km=ch.get("mileage"),
                        prix=est.get("max") or None, prix_type="estimation haute" if est.get("max") else None,
                        dept=cp if cp.isdigit() and cp != "20" else None, ville=adr.get("city"))
@@ -364,4 +431,8 @@ def collecter_interencheres(cfg, debug=False):
 COLLECTEURS = {"vpauto": collecter_vpauto, "alcopa": collecter_alcopa, "interencheres": collecter_interencheres}
 
 def collecter(nom, debug=False):
-    return COLLECTEURS[nom](SITES[nom], debug)
+    lots = COLLECTEURS[nom](SITES[nom], debug)
+    voitures = [l for l in lots if not re.search(NON_VOITURE, norm(l["titre"]))]
+    if len(voitures) < len(lots):
+        print(f"  {len(lots) - len(voitures)} lot(s) écarté(s) : pas des voitures (vélo, voiturette sans permis…)")
+    return voitures

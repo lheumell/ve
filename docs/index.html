@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Veille VE</title>
 <style>
-:root{--bg:#f3f6f7;--card:#fff;--txt:#16323f;--mut:#5a6b75;--line:#e3e9eb}
-@media(prefers-color-scheme:dark){:root{--bg:#10181c;--card:#18232a;--txt:#e6eef1;--mut:#93a4ad;--line:#26343c}}
+:root{--bg:#f3f6f7;--card:#fff;--txt:#16323f;--mut:#5a6b75;--line:#e3e9eb;--acc:#1d7a55;--warn:#b45309;--up:#b91c1c}
+@media(prefers-color-scheme:dark){:root{--bg:#10181c;--card:#18232a;--txt:#e6eef1;--mut:#93a4ad;--line:#26343c;--acc:#3fbf8a;--warn:#f0a95b;--up:#f08a8a}}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--txt);font:15px/1.4 system-ui,sans-serif}
 .wrap{max-width:980px;margin:auto;padding:16px}
@@ -14,14 +14,29 @@ header{display:flex;justify-content:space-between;align-items:baseline;gap:12px;
 h1{font-size:22px;margin:0}
 .meta,.bar{color:var(--mut);font-size:13px}
 .bar{margin:10px 0}
+.panel{background:var(--card);border-radius:12px;padding:12px;margin-top:12px;box-shadow:0 1px 3px #0002}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--mut)}
+input,select{font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--txt);min-width:0;width:100%}
+.opts{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:10px;font-size:13px}
+.opts label{flex-direction:row;align-items:center;gap:6px;color:var(--txt);font-size:13px}
+.opts input{width:auto}
+button.reset{margin-left:auto;font:inherit;font-size:13px;border:1px solid var(--line);background:none;color:var(--txt);border-radius:8px;padding:4px 10px;cursor:pointer}
 .card{display:flex;gap:12px;background:var(--card);border-radius:12px;padding:10px;margin:10px 0;
   text-decoration:none;color:inherit;box-shadow:0 1px 3px #0002}
 .thumb{width:150px;height:110px;object-fit:cover;border-radius:8px;flex-shrink:0;background:var(--line);
   display:flex;align-items:center;justify-content:center;font-size:32px}
-.body{min-width:0}
+.body{min-width:0;flex:1}
 .name{font-size:16px;font-weight:600;overflow-wrap:anywhere}
-.facts{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;margin-top:6px}
+.cout{margin-top:6px;font-size:16px}
+.cout b{font-size:18px}
+.cout small,.facts small{color:var(--mut)}
+.facts{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;margin-top:4px}
 .tag{display:inline-block;font-size:11px;border-radius:5px;padding:1px 6px;margin:6px 6px 0 0;background:var(--line);color:var(--mut)}
+.tag.new{background:var(--acc);color:#fff;font-weight:700}
+.tag.down{background:var(--acc);color:#fff}
+.tag.up{background:var(--up);color:#fff}
+.tag.warn{color:var(--warn)}
 .empty{padding:26px 10px;text-align:center;color:var(--mut)}
 @media(max-width:560px){.thumb{width:96px;height:84px}}
 </style>
@@ -32,15 +47,58 @@ h1{font-size:22px;margin:0}
   <h1>⚡ Veille VE — enchères</h1>
   <span class="meta" id="maj">chargement…</span>
 </header>
+
+<div class="panel">
+  <div class="grid">
+    <label>Recherche<input id="q" type="search" placeholder="Zoé, Tesla, Lorient…"></label>
+    <label>Site<select id="site"><option value="">Tous</option></select></label>
+    <label>Coût frais compris min €<input id="cmin" type="number" inputmode="numeric" step="500"></label>
+    <label>Coût frais compris max €<input id="cmax" type="number" inputmode="numeric" step="500"></label>
+    <label>Km max<input id="kmax" type="number" inputmode="numeric" step="5000"></label>
+    <label>Année min<input id="amin" type="number" inputmode="numeric" step="1"></label>
+    <label>SoH min %<input id="sohmin" type="number" inputmode="numeric" step="1"></label>
+    <label>Batterie min kWh<input id="kwhmin" type="number" inputmode="numeric" step="5"></label>
+    <label>Départements<input id="dept" type="text" placeholder="59, 62, 80"></label>
+    <label>Trier par<select id="tri">
+      <option value="nouveaute">Nouveautés</option>
+      <option value="cout_estime">Coût frais compris</option>
+      <option value="prix">Prix</option>
+      <option value="km">Kilométrage</option>
+      <option value="annee">Année</option>
+      <option value="soh">SoH</option>
+      <option value="date_vente">Date de vente</option>
+    </select></label>
+    <label>Ordre<select id="ordre"><option value="auto">Par défaut</option><option value="asc">Croissant</option><option value="desc">Décroissant</option></select></label>
+  </div>
+  <div class="opts">
+    <label><input type="checkbox" id="nouveaux"> Nouveaux seulement</label>
+    <label><input type="checkbox" id="variation"> Prix modifié seulement</label>
+    <label><input type="checkbox" id="avecprix"> Avec prix seulement</label>
+    <label><input type="checkbox" id="inconnus" checked> Garder les lots dont l’info est inconnue</label>
+    <button class="reset" id="reset" type="button">Réinitialiser</button>
+  </div>
+</div>
+
 <div class="bar" id="bar"></div>
 <div id="liste"></div>
+<footer class="meta" id="pied" style="margin-top:24px"></footer>
 </div>
 
 <script>
 const $ = s => document.querySelector(s);
+const CLE = 've.filtres3';
+const lire = () => { try { return JSON.parse(localStorage.getItem(CLE)) || {} } catch { return {} } };
+const ecrire = v => { try { localStorage.setItem(CLE, JSON.stringify(v)) } catch {} };
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const nb = n => (n === null || n === undefined || isNaN(n)) ? '?' : Math.round(n).toLocaleString('fr-FR');
 const jour = s => s ? new Date(s).toLocaleDateString('fr-FR', {day:'2-digit', month:'short'}) : null;
+const norm = s => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+const isoJour = d => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+const ilYa = n => { const d = new Date(); d.setDate(d.getDate() - n); return isoJour(d); };
+
+const CHAMPS = ['q','site','cmin','cmax','kmax','amin','sohmin','kwhmin','dept','tri','ordre'];
+const CASES = ['nouveaux','variation','avecprix','inconnus'];
+let DATA = null;
 
 function depuis(iso){
   const m = Math.round((Date.now() - new Date(iso)) / 60000);
@@ -50,40 +108,130 @@ function depuis(iso){
   return h < 24 ? `il y a ${h} h` : `il y a ${Math.round(h / 24)} j`;
 }
 
+const etat = () => {
+  const e = {};
+  for (const k of CHAMPS) e[k] = $('#' + k).value;
+  for (const k of CASES) e[k] = $('#' + k).checked;
+  return e;
+};
+const num = v => { const x = parseFloat(v); return isNaN(x) ? null : x; };
+
+function garde(l, f){
+  const inc = f.inconnus;
+  // borne sur une valeur éventuellement inconnue : inconnu => gardé seulement si « garder les inconnus »
+  const borne = (val, min, max) => {
+    if (min === null && max === null) return true;
+    if (val === null || val === undefined) return inc;
+    return (min === null || val >= min) && (max === null || val <= max);
+  };
+  if (f.site && l.site !== f.site) return false;
+  if (f.q) {
+    const hay = norm([l.titre, l.ville, l.dept, l.site, l.texte].join(' '));
+    if (!norm(f.q).split(/\s+/).every(w => hay.includes(w))) return false;
+  }
+  if (!borne(l.cout_estime, num(f.cmin), num(f.cmax))) return false;
+  if (!borne(l.km, null, num(f.kmax))) return false;
+  if (!borne(l.annee, num(f.amin), null)) return false;
+  if (!borne(l.soh, num(f.sohmin), null)) return false;
+  if (!borne(l.kwh, num(f.kwhmin), null)) return false;
+  const depts = f.dept.split(/[\s,;]+/).filter(Boolean);
+  if (depts.length && !(l.dept ? depts.includes(l.dept) : inc)) return false;
+  if (f.avecprix && !l.prix) return false;
+  if (f.nouveaux && !estNouveau(l)) return false;
+  if (f.variation && !variation(l)) return false;
+  return true;
+}
+
+const estNouveau = l => !!l.premiere_vue && l.premiere_vue >= ilYa(2);
+function variation(l){
+  if (!l.prix_precedent || !l.prix_change_le || l.prix_change_le < ilYa(7)) return null;
+  return {delta: l.prix - l.prix_precedent, avant: l.prix_precedent};
+}
+
 function carte(l){
   const img = l.image ? `<img class="thumb" src="${esc(l.image)}" loading="lazy" alt="">` : '<div class="thumb">⚡</div>';
   const lieu = [l.ville, l.dept].filter(Boolean).join(' · ');
+  const cout = l.cout_estime
+    ? `<div class="cout"><b>≈ ${nb(l.cout_estime)} €</b> frais compris
+        <small>(${nb(l.prix)} € + ${nb(l.frais_estimes)} € de frais · ${esc(l.frais_detail)}
+        · barème ${l.frais_source === 'lot' ? 'du lot' : 'du site'})</small></div>`
+    : `<div class="cout"><b>Prix ?</b> <small>${l.mise_a_prix ? 'mise à prix ' + nb(l.mise_a_prix) + ' €' : 'non communiqué'}
+        · frais : ${esc(l.frais_detail)}</small></div>`;
   const f = [
     `<span>${esc(l.annee ?? '?')}</span>`,
     `<span><b>${nb(l.km)}</b> km</span>`,
-    `<span><b>${nb(l.prix)} €</b>${l.prix_type ? ' <small>(' + esc(l.prix_type) + ')</small>' : ''}</span>`,
+    l.prix_type ? `<span><small>${esc(l.prix_type)}</small></span>` : '',
     l.kwh ? `<span>${esc(l.kwh)} kWh</span>` : '',
     l.soh ? `<span>SoH <b>${esc(l.soh)} %</b></span>` : '',
     lieu ? `<span>${esc(lieu)}</span>` : '',
     jour(l.date_vente) ? `<span>vente ${jour(l.date_vente)}</span>` : '',
   ].join('');
-  const t = [`<span class="tag">${esc(l.site)}</span>`];
-  if (l.perime) t.push('<span class="tag">données de la veille</span>');
+  const t = [];
+  if (estNouveau(l)) t.push('<span class="tag new">NOUVEAU</span>');
+  const v = variation(l);
+  if (v) t.push(`<span class="tag ${v.delta < 0 ? 'down' : 'up'}">${v.delta < 0 ? '↓' : '↑'} ${nb(Math.abs(v.delta))} € (avant ${nb(v.avant)} €)</span>`);
+  t.push(`<span class="tag">${esc(l.site)}</span>`);
+  if (l.perime) t.push('<span class="tag warn">données de la veille</span>');
   return `<a class="card" href="${esc(l.url)}" target="_blank" rel="noopener">${img}
-    <div class="body"><div class="name">${esc(l.titre || '?')}</div>
+    <div class="body"><div class="name">${esc(l.titre || '?')}</div>${cout}
     <div class="facts">${f}</div><div>${t.join('')}</div></div></a>`;
 }
 
+function trier(lots, f){
+  const k = f.tri;
+  const val = l => k === 'nouveaute' ? (l.premiere_vue || '') : l[k];
+  // sens par défaut : nouveautés/année/SoH/date décroissants, le reste croissant
+  const defDesc = ['nouveaute', 'annee', 'soh'].includes(k);
+  const desc = f.ordre === 'desc' || (f.ordre === 'auto' && defDesc);
+  return lots.sort((a, b) => {
+    const x = val(a), y = val(b);
+    const nx = x === null || x === undefined || x === '', ny = y === null || y === undefined || y === '';
+    if (nx && ny) return 0;
+    if (nx) return 1;            // les valeurs inconnues restent en bas
+    if (ny) return -1;
+    return (x > y ? 1 : x < y ? -1 : 0) * (desc ? -1 : 1);
+  });
+}
+
+function rendre(){
+  if (!DATA) return;
+  const f = etat();
+  ecrire(f);
+  const lots = trier(DATA.lots.filter(l => garde(l, f)), f);
+  $('#liste').innerHTML = lots.slice(0, 400).map(carte).join('') || '<div class="empty">Aucun lot ne correspond à ces filtres.</div>';
+  const nouveaux = DATA.lots.filter(estNouveau).length;
+  const modifs = DATA.lots.filter(variation).length;
+  $('#bar').innerHTML = `<strong>${lots.length}</strong> affiché(s) sur ${DATA.lots.length}`
+    + (nouveaux ? ` · ${nouveaux} nouveau(x)` : '') + (modifs ? ` · ${modifs} prix modifié(s)` : '');
+}
+
 async function charger(){
-  let d;
   try {
     const r = await fetch('lots.json?t=' + Date.now(), {cache:'no-store'});
     if (!r.ok) throw new Error(r.status);
-    d = await r.json();
+    DATA = await r.json();
   } catch (e) {
     $('#maj').textContent = 'lots.json introuvable';
     $('#liste').innerHTML = '<div class="empty">Aucune donnée pour l’instant.</div>';
     return;
   }
-  $('#maj').textContent = 'mis à jour ' + depuis(d.genere_le);
-  const par = Object.entries(d.sites || {}).map(([s, n]) => `${s} ${n}`).join(' · ');
-  $('#bar').innerHTML = `<strong>${d.lots.length}</strong> véhicules électriques · ${esc(par)}`;
-  $('#liste').innerHTML = d.lots.map(carte).join('') || '<div class="empty">Aucun lot.</div>';
+  $('#maj').textContent = 'mis à jour ' + depuis(DATA.genere_le);
+  $('#site').innerHTML = '<option value="">Tous</option>'
+    + Object.entries(DATA.sites || {}).map(([s, n]) => `<option value="${esc(s)}">${esc(s)} (${n})</option>`).join('');
+  const sauve = lire();
+  for (const k of CHAMPS) if (sauve[k] !== undefined) $('#' + k).value = sauve[k];
+  for (const k of CASES) if (sauve[k] !== undefined) $('#' + k).checked = sauve[k];
+  [...CHAMPS.map(k => '#' + k), ...CASES.map(k => '#' + k)].forEach(s => {
+    $(s).addEventListener('input', rendre); $(s).addEventListener('change', rendre);
+  });
+  $('#reset').onclick = () => {
+    for (const k of CHAMPS) $('#' + k).value = k === 'tri' ? 'nouveaute' : k === 'ordre' ? 'auto' : '';
+    for (const k of CASES) $('#' + k).checked = k === 'inconnus';
+    rendre();
+  };
+  $('#pied').textContent = 'Frais estimés = barème du site (CGV) ou lu dans les conditions du lot, hors carte grise et transport. '
+    + 'Le prix est une estimation haute ou l’enchère courante : le prix final peut différer. Vérifie toujours la fiche.';
+  rendre();
 }
 charger();
 </script>

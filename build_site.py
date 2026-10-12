@@ -15,6 +15,25 @@ S = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(S)
 
 
+def historiser(lots, precedents, aujourdhui):
+    """Historique : première apparition d'un lot et variation de son prix depuis le run précédent.
+    - premiere_vue : date où le lot a été vu pour la première fois (None = déjà présent avant le suivi)
+    - prix_precedent / prix_change_le : dernier changement de prix constaté"""
+    avant = {l["id"]: l for l in precedents}
+    suivi = any("premiere_vue" in l for l in precedents)      # 1er run avec historique : l'existant n'est pas « nouveau »
+    for l in lots:
+        p = avant.get(l["id"])
+        if p is None:
+            l["premiere_vue"] = aujourdhui if (suivi or not precedents) else None
+            continue
+        l["premiere_vue"] = p.get("premiere_vue")
+        l["prix_precedent"], l["prix_change_le"] = p.get("prix_precedent"), p.get("prix_change_le")
+        if p.get("prix") and l.get("prix") and p["prix"] != l["prix"]:
+            l["prix_precedent"], l["prix_change_le"] = p["prix"], aujourdhui
+        if l["prix_precedent"] is None:
+            l.pop("prix_precedent"); l.pop("prix_change_le")
+
+
 def main():
     a = argparse.ArgumentParser()
     a.add_argument("--sites", default=",".join(S.SITES))
@@ -46,6 +65,8 @@ def main():
     # sites non demandés : on garde leurs lots tels quels
     demandes = set(comptes)
     lots += [l for l in precedents if l.get("site") not in demandes and l.get("site") in S.SITES]
+
+    historiser(lots, precedents, dt.date.today().isoformat())
 
     charge = {
         "genere_le": dt.datetime.now().astimezone().isoformat(timespec="seconds"),
