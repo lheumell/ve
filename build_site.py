@@ -7,7 +7,7 @@ et écrit docs/lots.json pour le site statique (docs/index.html).
     python build_site.py --sites vpauto,alcopa
     python build_site.py --debug               # enregistre les pages brutes dans ./debug/
 """
-import argparse, datetime as dt, importlib.util, json, pathlib
+import argparse, collections, datetime as dt, importlib.util, json, pathlib
 
 RACINE = pathlib.Path(__file__).resolve().parent
 spec = importlib.util.spec_from_file_location("scraper", RACINE / "scraper.py")
@@ -67,6 +67,7 @@ def main():
     lots += [l for l in precedents if l.get("site") not in demandes and l.get("site") in S.SITES]
 
     historiser(lots, precedents, dt.date.today().isoformat())
+    comptes = dict(collections.Counter(l["site"] for l in lots))      # total réel, même après un run partiel
 
     charge = {
         "genere_le": dt.datetime.now().astimezone().isoformat(timespec="seconds"),
