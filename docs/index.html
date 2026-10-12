@@ -249,8 +249,11 @@ async function charger(){
   rendre();
 }
 // --- Nouvelle recherche : disponible seulement quand la page est servie par serve.py (python3 serve.py) ---
+// Sur le site public, le bouton parle au serveur qui tourne sur ton PC (python3 serve.py, démarré avec WSL).
+const LOCAL = ['localhost', '127.0.0.1'].includes(location.hostname);
+const API = LOCAL ? '' : 'http://localhost:8000/';
 async function api(chemin, opts){
-  try { return await fetch(chemin, {cache:'no-store', ...opts}); } catch { return null; }
+  try { return await fetch(API + chemin, {cache:'no-store', ...opts}); } catch { return null; }
 }
 const duree = ms => { const m = Math.floor(ms / 60000), s = Math.floor(ms / 1000) % 60; return m ? `${m} min ${s} s` : `${s} s`; };
 
@@ -277,16 +280,19 @@ async function suivre(debut){
 }
 
 async function initRecherche(){
-  const r = await api('api/status');
-  if (!r || !r.ok) return;                       // version publique (GitHub Pages) : pas de bouton
-  const s = await r.json();
-  const btn = $('#refresh'); btn.hidden = false;
+  const btn = $('#refresh'); btn.hidden = false;           // toujours visible
+  const message = (txt, err) => { const e = $('#etat'); e.hidden = false; e.className = err ? 'err' : ''; e.textContent = txt; };
   btn.onclick = async () => {
     btn.disabled = true;
-    const p = await api('api/refresh', {method:'POST'});
-    if (p && (p.ok || p.status === 409)) suivre(); else { btn.disabled = false; $('#etat').hidden = false; $('#etat').className = 'err'; $('#etat').textContent = 'Impossible de lancer la recherche.'; }
+    const p = await api('api/refresh', {method:'POST', headers:{'X-Veille':'1'}});
+    if (p && (p.ok || p.status === 409)) return suivre();
+    btn.disabled = false;
+    message(p ? 'Le serveur a refusé la demande.'
+              : 'Le serveur local ne répond pas. Il tourne sur le PC où est installé le scraper : lance « python3 serve.py » '
+                + '(il démarre normalement tout seul avec WSL), ou ouvre la page depuis ce PC.', true);
   };
-  if (s.en_cours) { btn.disabled = true; suivre(); }
+  const r = await api('api/status');
+  if (r && r.ok && (await r.json()).en_cours) { btn.disabled = true; suivre(); }
 }
 charger();
 initRecherche();

@@ -16,6 +16,9 @@ LOG = RACINE / "refresh.log"
 VERROU = RACINE / ".publish.lock"                 # le même que publish.sh : empêche un double run (cron + bouton)
 CMD = os.environ.get("REFRESH_CMD", str(RACINE / "publish.sh"))
 
+# Pages autorisées à appeler l'API : le site public et le site local. Tout autre site web est refusé.
+ORIGINES = {"https://lheumell.github.io", "http://localhost:8000", "http://127.0.0.1:8000"}
+
 etat = {"debut": None, "fin": None, "code": None}
 mutex = threading.Lock()
 
@@ -54,7 +57,23 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 
     def end_headers(self):
         self.send_header("Cache-Control", "no-store")
+        origine = self.headers.get("Origin")
+        if origine in ORIGINES | {f"http://localhost:{self.server.server_port}", f"http://127.0.0.1:{self.server.server_port}"}:
+            self.send_header("Access-Control-Allow-Origin", origine)
+            self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+            self.send_header("Access-Control-Allow-Headers", "X-Veille")
+            self.send_header("Access-Control-Allow-Private-Network", "true")   # site https -> localhost
+            self.send_header("Vary", "Origin")
         super().end_headers()
+
+    def origine_ok(self):
+        o = self.headers.get("Origin")
+        return o is None or o in ORIGINES | {f"http://localhost:{self.server.server_port}",
+                                             f"http://127.0.0.1:{self.server.server_port}"}
+
+    def do_OPTIONS(self):
+        self.send_response(204)
+        self.end_headers()
 
     def _json(self, code, obj):
         corps = json.dumps(obj, ensure_ascii=False).encode()
@@ -72,6 +91,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
     def do_POST(self):
         if self.path != "/api/refresh":
             return self._json(404, {"erreur": "inconnu"})
+        if not self.origine_ok() or self.headers.get("X-Veille") != "1":     # anti-CSRF : un autre site ne peut pas déclencher
+            return self._json(403, {"erreur": "refusé"})
         with mutex:
             if verrou_pris():
                 return self._json(409, {"erreur": "une recherche est déjà en cours"})

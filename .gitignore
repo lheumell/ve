@@ -5,3 +5,4 @@ ve_encheres_etat.json
 cron.log
 .publish.lock
 refresh.log
+serve.log
