@@ -2,3 +2,5 @@
 debug/
 __pycache__/
 ve_encheres_etat.json
+cron.log
+.publish.lock

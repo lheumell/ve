@@ -160,8 +160,7 @@ function etat(){
 }
 
 function garde(l, f){
-  if (!l.modele) return false;
-  if (f.modeles.length && !f.modeles.includes(l.modele)) return false;
+  if (f.modeles.length && !f.modeles.includes(l.modele)) return false;   // lots hors modèles ciblés : visibles avec « lots écartés »
   if (!f.ecartes && !l.retenu) return false;
   if (masques.has(l.id) !== f.masq) return false;
   if (f.budget !== null && l.prix_final && l.prix_final > f.budget) return false;
@@ -197,7 +196,7 @@ function carte(l){
   return `<a class="card ${l.retenu ? '' : 'out'}" href="${esc(l.url)}" target="_blank" rel="noopener">
     ${img}
     <div class="body">
-      <div class="top"><div><div class="name">${esc(l.modele)}</div>
+      <div class="top"><div><div class="name">${esc(l.modele || l.titre || "?")}</div>
       <div class="sub">${esc(l.titre || '')}</div></div><span class="score">${l.score}</span></div>
       <div class="facts">${f}</div><div class="tags">${t.join('')}</div>
     </div>

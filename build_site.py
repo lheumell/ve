@@ -83,6 +83,19 @@ def main():
                      if cfg["mode"] == "http"
                      else S.collecter_navigateur(nom, cfg, a.visible, a.debug))
 
+    # Un site qui renvoie 0 lot (Cloudflare, pas d'écran, panne) ne doit pas effacer ses lots de la veille.
+    precedents = []
+    sortie_p = pathlib.Path(a.sortie)
+    if sortie_p.exists() and not a.fichier:
+        try:
+            precedents = json.loads(sortie_p.read_text(encoding="utf-8")).get("lots", [])
+        except ValueError:
+            pass
+    demandes = [x.strip() for x in a.sites.split(",") if x.strip()] if not a.fichier else []
+    vides = [n for n in demandes if n in S.CONFIG["sites"] and not any(l["site"] == n for l in lots)]
+    for n in vides:
+        print(f"  ! {n} : 0 lot collecté, on conserve les lots du précédent run")
+
     evalues = []
     for l in lots:
         cfg = S.CONFIG["sites"].get(l["site"], {"frais_pct": 0.1428, "frais_min": 360})
@@ -92,6 +105,7 @@ def main():
         e["mensualite_au_max"] = round(S.mensualite_totale(S.CONFIG["budget_total_max"]))
         evalues.append(e)
 
+    evalues += [{**e, "perime": True} for e in precedents if e.get("site") in vides]
     sortie = pathlib.Path(a.sortie); sortie.parent.mkdir(parents=True, exist_ok=True)
     charge = {
         "genere_le": dt.datetime.now().astimezone().isoformat(timespec="seconds"),

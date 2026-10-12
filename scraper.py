@@ -42,8 +42,7 @@ CONFIG = {
     "sites": {
         "vpauto": {
             "mode": "http",
-            "urls": [f"https://www.vpauto.fr/vehicule/liste?maker={m}" for m in
-                     ["Kia", "Hyundai", "Volkswagen", "Skoda", "Cupra", "MG", "Tesla", "Renault"]],
+            "urls": ["https://www.vpauto.fr/vehicule/liste?energy=electrique"],
             "pages_max": 6,
             "frais_pct": 0.0,        # VPauto affiche des prix « frais de vente inclus »
             "frais_min": 0,
@@ -51,7 +50,8 @@ CONFIG = {
         "alcopa": {
             "mode": "browser",
             # Colle ici l'URL de ta recherche Alcopa filtrée sur « Électrique » (copiée depuis ton navigateur)
-            "urls": [],
+            "urls": ["https://www.alcopa-auction.fr/recherche?energy_families%5B%5D=EL&category_view=VP"],
+            "pages_max": 8,          # pagination &page=N, arrêt dès qu'une page n'apporte rien de nouveau
             "lien_motif": r"alcopa-auction\.fr/.+",
             "frais_pct": 0.144,      # 12 % HT = 14,4 % TTC (salle / live). Les ventes web affichent souvent un prix TTC final.
             "frais_min": 360,
@@ -59,8 +59,9 @@ CONFIG = {
         "interencheres": {
             "mode": "browser",
             # Colle ici l'URL de ta recherche Interenchères (catégorie véhicules, filtrée électrique)
-            "urls": [],
-            "lien_motif": r"interencheres\.com/.+",
+            "urls": ["https://www.interencheres.com/vehicules/vehicules-electriques-et-hydrides"],
+            "pages_max": 60,
+            "lien_motif": r"interencheres\.com/vehicules/.+/lot-\d+\.html",
             "frais_pct": 0.144,      # variable selon le commissaire-priseur : vérifie la fiche
             "frais_min": 300,
         },
@@ -194,7 +195,8 @@ def extraire_champs(texte):
     if m:
         o["annee"], o["km"] = int(m.group(1)), num(m.group(2))
     else:
-        m = re.search(rf"(\d{{1,3}}(?:{SEP_NUM}\d{{3}})+|\d{{4,6}})\s*km\b", t)
+        t_km = re.sub(rf"\b20[12]\d\b(?=\s+\d{{1,3}}(?:{SEP_NUM}\d{{3}})*\s*km\b)", " ", t)   # « mise : 2020 199 075 km »
+        m = re.search(rf"(\d{{1,3}}(?:{SEP_NUM}\d{{3}})+|\d{{4,6}})\s*km\b", t_km)
         if m:
             o["km"] = num(m.group(1))
         m = re.search(r"\b(20[12]\d)\b", t)
@@ -246,9 +248,9 @@ def extraire_champs(texte):
 def cartes_vpauto(html_txt, base):
     soup = BeautifulSoup(html_txt, "html.parser")
     lots = {}
-    for a in soup.find_all("a", href=re.compile(r"/vehicule/[0-9a-f]{6,}/")):
+    for a in soup.find_all("a", href=re.compile(r"/vehicule/[0-9A-Za-z]{6,}/")):
         url = urljoin(base, a["href"].split("?")[0])
-        ident = re.search(r"/vehicule/([0-9a-f]+)/", url).group(1)
+        ident = re.search(r"/vehicule/([0-9A-Za-z]+)/", url).group(1)
         texte = a.get_text(" ", strip=True)
         if len(texte) < 15 or "km" not in texte.lower():
             continue
@@ -256,7 +258,7 @@ def cartes_vpauto(html_txt, base):
         src = img and (img.get("data-src") or img.get("src"))
         if ident not in lots or len(texte) > len(lots[ident]["texte"]):
             lots[ident] = {"id": f"vpauto:{ident}", "site": "vpauto", "url": url, "texte": texte,
-                           "titre": a.get("title") or texte[:90], "image": urljoin(base, src) if src else None}
+                           "titre": texte[:90], "image": urljoin(base, src) if src else None}
     return list(lots.values())
 
 def cartes_generiques(html_txt, base, site, lien_motif):
@@ -318,15 +320,35 @@ def modele_de(texte):
             return m, None
     return None, "modèle hors liste"
 
+def prix_final(ch, site_cfg):
+    """Prix final frais compris (et s'il est estimé depuis la mise à prix)."""
+    prix, estime = ch.get("prix"), False
+    if not prix and ch.get("mise_a_prix"):
+        prix, estime = round(ch["mise_a_prix"] * CONFIG["facteur_mise_a_prix"]), True
+    if prix and not (ch.get("frais_inclus") or site_cfg.get("frais_pct", 0) == 0):
+        prix = round(max(prix * (1 + site_cfg["frais_pct"]), prix + site_cfg["frais_min"]))
+    return prix, estime
+
+def distance_km(ch):
+    if ch.get("dept") in DEPTS:
+        la, lo = map(float, DEPTS[ch["dept"]].split(","))
+        return round(haversine(CONFIG["maison"], (la, lo)) * 1.25)
+    return None
+
 def evaluer(lot, site_cfg):
     c = CONFIG
     raisons = []
     modele, pb = modele_de(lot["texte"])
     if re.search(LOTS_TERMINES, norm(lot["texte"])):
         raisons.append("lot déjà vendu")
-    if not modele:
+    if not modele:                    # aucun filtre à l'extraction : le lot est gardé avec ses champs, le tri se fait dans le front
         raisons.append(pb)
-        return {**lot, "retenu": False, "raisons": raisons, "score": 0}
+        ch = extraire_champs(lot["texte"])
+        prix, prix_estime = prix_final(ch, site_cfg)
+        return {**lot, **ch, "modele": None, "prix_final": prix, "prix_estime": prix_estime,
+                "distance_km": distance_km(ch), "garantie_restante_ans": None,
+                "mensualite": round(mensualite_totale(prix)) if prix else None,
+                "manque": [], "retenu": False, "raisons": raisons, "score": 0}
     ch = extraire_champs(lot["texte"])
     if lot.get("detail"):                                   # la fiche complète la liste (SoH, date, kWh, lieu)
         det = extraire_champs(lot["detail"])
@@ -338,12 +360,7 @@ def evaluer(lot, site_cfg):
         ch["frais_inclus"] = ch.get("frais_inclus") or det.get("frais_inclus", False)
     annee, km = ch.get("annee"), ch.get("km")
 
-    # Prix final frais compris
-    prix, prix_estime = ch.get("prix"), False
-    if not prix and ch.get("mise_a_prix"):
-        prix, prix_estime = round(ch["mise_a_prix"] * c["facteur_mise_a_prix"]), True
-    if prix and not (ch.get("frais_inclus") or site_cfg.get("frais_pct", 0) == 0):
-        prix = round(max(prix * (1 + site_cfg["frais_pct"]), prix + site_cfg["frais_min"]))
+    prix, prix_estime = prix_final(ch, site_cfg)
 
     # Garantie batterie restante
     g_ans, g_km = modele["garantie"]
@@ -354,11 +371,7 @@ def evaluer(lot, site_cfg):
         age = (dt.date.today() - dt.date(annee, 6, 30)).days / 365.25
         reste = round(min(g_ans - age, (g_km - km) / c["km_par_an"]), 1)
 
-    # Distance
-    dist = None
-    if ch.get("dept") in DEPTS:
-        la, lo = map(float, DEPTS[ch["dept"]].split(","))
-        dist = round(haversine(c["maison"], (la, lo)) * 1.25)
+    dist = distance_km(ch)
 
     # Filtres éliminatoires
     if annee and annee < c["annee_min"]:
@@ -410,7 +423,7 @@ def collecter_vpauto(cfg, session, detail=True, debug=False):
             if len(lots) == nb_avant:              # plus de nouveaux lots : fin de pagination
                 break
             nb_avant = len(lots)
-        print(f"  {base.split('maker=')[-1]:<11} → {len(lots)} lots cumulés")
+        print(f"  {base.split('?')[-1][:40]:<40} → {len(lots)} lots cumulés")
     lots = list(lots.values())
     if detail:
         cand = [l for l in lots if modele_de(l["texte"])[0]]
@@ -426,18 +439,94 @@ def collecter_vpauto(cfg, session, detail=True, debug=False):
             time.sleep(CONFIG["delai_requetes_s"])
     return lots
 
+def collecter_interencheres(cfg, debug=False):
+    """Interenchères : lit l'état Nuxt (window.__NUXT__) des pages de résultats. Cloudflare bloque le mode
+    headless : le navigateur est lancé en mode visible (WSLg/X requis), sans quoi 0 lot est remonté."""
+    try:
+        from playwright.sync_api import sync_playwright
+    except ImportError:
+        print("  ! Playwright absent"); return []
+    lots = {}
+    with sync_playwright() as p:
+        try:
+            nav = p.chromium.launch(headless=False)
+        except Exception as e:
+            print(f"  ! navigateur visible indisponible (pas d'affichage ?) : {str(e)[:120]}"); return []
+        pg = nav.new_page(locale="fr-FR")
+        for base in cfg["urls"]:
+            try:
+                pg.goto(base, wait_until="domcontentloaded", timeout=60000)
+                pg.wait_for_function("() => window.__NUXT__ && window.__NUXT__.state && window.__NUXT__.state.sale",
+                                     timeout=45000)
+            except Exception:
+                print(f"  ! bloquée (Cloudflare « {pg.title()[:30]} ») ou sans données"); continue
+            pg.wait_for_timeout(3000)
+            m = re.search(r'"totalPages":(\d+)', pg.evaluate("() => JSON.stringify(window.__NUXT__)"))
+            total = min(int(m.group(1)) if m else 1, cfg.get("pages_max", 8))
+            for page in range(1, total + 1):
+                if page > 1:                               # pagination côté client : un rechargement re-déclenche Cloudflare
+                    try:
+                        pg.locator("button.v-pagination__item", has_text=re.compile(rf"^{page}$")).first.click(timeout=15000)
+                        pg.wait_for_timeout(5000)
+                    except Exception:
+                        print(f"  ! page {page} : bouton de pagination introuvable"); break
+                nuxt = pg.evaluate("() => JSON.stringify({items: window.__NUXT__.state.sale.saleItems || []})")
+                hrefs = pg.evaluate("() => [...document.querySelectorAll('a[href*=\"/lot-\"]')].map(a => a.getAttribute('href'))")
+                liens = {m.group(1): h for h in hrefs for m in [re.search(r"/lot-(\d+)\.html", h)] if m}
+                if debug:
+                    pathlib.Path("debug").mkdir(exist_ok=True)
+                    pathlib.Path(f"debug/interencheres_{page}.json").write_text(nuxt, encoding="utf-8")
+                for it in json.loads(nuxt)["items"]:
+                    l = lot_interencheres(it, liens)
+                    if l:
+                        lots.setdefault(l["id"], l)
+                print(f"  page {page}/{total} → {len(lots)} lots cumulés")
+                time.sleep(CONFIG["delai_requetes_s"])
+        nav.close()
+    return list(lots.values())
+
+def lot_interencheres(it, liens):
+    ch = it.get("characteristics") or {}
+    titre = (it.get("title_translations") or {}).get("fr-FR") or it.get("internal_reference") or ""
+    desc = (it.get("description_translations") or {}).get("fr-FR") or ""
+    lid = str(it.get("id"))
+    if lid not in liens:
+        return None
+    annee = (ch.get("first_registration_date") or "")[:4]
+    km = ch.get("mileage")
+    est = (it.get("pricing") or {}).get("estimates") or {}
+    org = it.get("organization") or {}
+    adr = org.get("address") or {}
+    dept = (adr.get("postcode") or "")[:2]
+    parts = [titre, f"{annee} - {km} km" if annee and km is not None else "",
+             "électrique" if ch.get("fuel_type") == "electric" else "",
+             f"Estimation : {est['min']} € - {est['max']} €" if est.get("min") else "",
+             f"Dept : {dept}" if dept in DEPTS else (adr.get("city") or ""), desc.replace("\n", " ")]
+    img = ((it.get("medias") or [{}])[0].get("rewriteImgUrl") or {}).get("md")
+    return {"id": f"interencheres:{lid}", "site": "interencheres", "url": urljoin("https://www.interencheres.com/", liens[lid]),
+            "texte": " ".join(x for x in parts if x), "titre": titre[:90], "image": ("https:" + img) if img else None}
+
 def collecter_navigateur(nom, cfg, visible=False, debug=False):
+    if nom == "interencheres":
+        return collecter_interencheres(cfg, debug)
     if not cfg["urls"]:
         print(f"  (aucune URL configurée pour {nom} : colle ta recherche filtrée dans CONFIG['sites']['{nom}']['urls'])")
         return []
-    lots = []
-    for url, contenu in lire_navigateur(cfg["urls"], visible, debug, nom):
+    lots = {}
+    urls = cfg["urls"]
+    if cfg.get("pages_max"):
+        urls = [u + (f"&page={i}" if i > 1 else "") for u in urls for i in range(1, cfg["pages_max"] + 1)]
+    for url, contenu in lire_navigateur(urls, visible, debug, nom):
         trouves = cartes_generiques(contenu, url, nom, cfg["lien_motif"])
-        print(f"  {url[:70]}… → {len(trouves)} lots")
+        neufs = [l for l in trouves if l["id"] not in lots]
+        print(f"  {url[-40:]} → {len(trouves)} lots, {len(neufs)} nouveaux")
         if not trouves:
             print(f"    Rien d'extrait. Relance avec --debug et --visible, puis envoie debug/{nom}_0.html pour ajuster.")
-        lots += trouves
-    return lots
+        for l in neufs:
+            lots[l["id"]] = l
+        if cfg.get("pages_max") and not neufs:
+            break
+    return list(lots.values())
 
 # ============================================================================
 # 7. RAPPORT
