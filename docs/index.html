@@ -2,64 +2,28 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0f1b21">
-<title>Veille VE — enchères</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Veille VE</title>
 <style>
-:root{
-  --bg:#f2f5f6; --card:#fff; --txt:#132430; --mut:#5d7281; --line:#dde5e8;
-  --acc:#1d7a55; --acc-txt:#fff; --warn:#8a6100; --warn-bg:#fdf0d2; --ok-bg:#dff1e8;
-  --shadow:0 1px 2px #0f1b2112,0 4px 14px #0f1b210d;
-}
-@media (prefers-color-scheme:dark){:root{
-  --bg:#0f1b21; --card:#16262e; --txt:#e7eef1; --mut:#9fb3bf; --line:#243b46;
-  --acc:#3ea97b; --acc-txt:#06211a; --warn:#f0c470; --warn-bg:#3a2f14; --ok-bg:#16352a;
-  --shadow:0 1px 2px #0006;
-}}
+:root{--bg:#f3f6f7;--card:#fff;--txt:#16323f;--mut:#5a6b75;--line:#e3e9eb}
+@media(prefers-color-scheme:dark){:root{--bg:#10181c;--card:#18232a;--txt:#e6eef1;--mut:#93a4ad;--line:#26343c}}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--txt);
-  font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;
-  padding:env(safe-area-inset-top) 0 40px}
-.wrap{max-width:900px;margin:auto;padding:0 14px}
-header{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;padding:18px 0 8px}
-h1{font-size:19px;margin:0;letter-spacing:-.2px}
-.meta{color:var(--mut);font-size:12.5px}
-.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;box-shadow:var(--shadow)}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
-label{font-size:11.5px;color:var(--mut);display:flex;flex-direction:column;gap:4px;text-transform:uppercase;letter-spacing:.04em}
-input,select{font:inherit;font-size:16px;padding:7px 9px;border:1px solid var(--line);border-radius:9px;
-  background:var(--bg);color:var(--txt);width:100%}
-.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
-.chip{font-size:12px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);
-  background:var(--bg);color:var(--mut);cursor:pointer;user-select:none}
-.chip[aria-pressed=true]{background:var(--acc);border-color:var(--acc);color:var(--acc-txt);font-weight:600}
-.bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:16px 0 6px;font-size:13px;color:var(--mut)}
-.bar strong{color:var(--txt)}
-a.card{display:flex;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:14px;
-  padding:10px;margin:10px 0;text-decoration:none;color:inherit;box-shadow:var(--shadow);position:relative}
-a.card:hover{border-color:var(--acc)}
-.thumb{width:132px;height:100px;flex:0 0 auto;border-radius:10px;object-fit:cover;background:var(--bg);
-  display:flex;align-items:center;justify-content:center;font-size:28px;color:var(--mut)}
-.body{min-width:0;flex:1}
-.top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
-.name{font-weight:650;font-size:16px}
-.sub{color:var(--mut);font-size:12px;margin:1px 0 7px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.score{flex:0 0 auto;background:var(--acc);color:var(--acc-txt);font-weight:700;font-size:13px;
-  border-radius:9px;padding:1px 8px}
-.facts{display:flex;flex-wrap:wrap;gap:3px 14px;font-size:13px}
-.facts span{white-space:nowrap}
-.facts b{font-variant-numeric:tabular-nums}
-.tags{margin-top:7px;display:flex;flex-wrap:wrap;gap:5px}
-.tag{font-size:11px;border-radius:6px;padding:2px 7px;background:var(--ok-bg)}
-.tag.w{background:var(--warn-bg);color:var(--warn)}
-.tag.n{background:var(--acc);color:var(--acc-txt);font-weight:700}
-.hide{position:absolute;top:6px;right:8px;border:0;background:transparent;color:var(--mut);
-  font-size:17px;line-height:1;cursor:pointer;padding:4px}
-.out{opacity:.62}
-.out .score{background:var(--line);color:var(--mut)}
+body{margin:0;background:var(--bg);color:var(--txt);font:15px/1.4 system-ui,sans-serif}
+.wrap{max-width:980px;margin:auto;padding:16px}
+header{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+h1{font-size:22px;margin:0}
+.meta,.bar{color:var(--mut);font-size:13px}
+.bar{margin:10px 0}
+.card{display:flex;gap:12px;background:var(--card);border-radius:12px;padding:10px;margin:10px 0;
+  text-decoration:none;color:inherit;box-shadow:0 1px 3px #0002}
+.thumb{width:150px;height:110px;object-fit:cover;border-radius:8px;flex-shrink:0;background:var(--line);
+  display:flex;align-items:center;justify-content:center;font-size:32px}
+.body{min-width:0}
+.name{font-size:16px;font-weight:600;overflow-wrap:anywhere}
+.facts{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;margin-top:6px}
+.tag{display:inline-block;font-size:11px;border-radius:5px;padding:1px 6px;margin:6px 6px 0 0;background:var(--line);color:var(--mut)}
 .empty{padding:26px 10px;text-align:center;color:var(--mut)}
-footer{margin-top:26px;font-size:12px;color:var(--mut)}
-@media(max-width:560px){.thumb{width:96px;height:84px}.name{font-size:15px}}
+@media(max-width:560px){.thumb{width:96px;height:84px}}
 </style>
 </head>
 <body>
@@ -68,41 +32,12 @@ footer{margin-top:26px;font-size:12px;color:var(--mut)}
   <h1>⚡ Veille VE — enchères</h1>
   <span class="meta" id="maj">chargement…</span>
 </header>
-
-<div class="panel">
-  <div class="grid">
-    <label>Budget total max €<input id="budget" type="number" inputmode="numeric" step="500"></label>
-    <label>Km max<input id="km" type="number" inputmode="numeric" step="5000"></label>
-    <label>Garantie batt. min (ans)<input id="gar" type="number" inputmode="decimal" step="0.5"></label>
-    <label>SoH min %<input id="soh" type="number" inputmode="numeric" step="1"></label>
-    <label>Distance max km<input id="dist" type="number" inputmode="numeric" step="50"></label>
-    <label>Trier par<select id="tri">
-      <option value="score">Score</option><option value="prix_final">Prix (croissant)</option>
-      <option value="km">Km (croissant)</option><option value="garantie_restante_ans">Garantie restante</option>
-      <option value="distance_km">Distance</option><option value="date_vente">Date de vente</option>
-    </select></label>
-  </div>
-  <div class="chips" id="modeles"></div>
-  <div class="chips" style="margin-top:8px">
-    <span class="chip" id="t-ecartes" role="button" aria-pressed="false">Voir les lots écartés</span>
-    <span class="chip" id="t-masques" role="button" aria-pressed="false">Voir mes lots masqués</span>
-    <span class="chip" id="t-reset" role="button">Réinitialiser les filtres</span>
-  </div>
-</div>
-
 <div class="bar" id="bar"></div>
 <div id="liste"></div>
-
-<footer id="pied"></footer>
 </div>
 
 <script>
 const $ = s => document.querySelector(s);
-const LS = { vus:'ve.vus', masq:'ve.masques', filtres:'ve.filtres2' };
-const lire = k => { try { return JSON.parse(localStorage.getItem(k)) || null } catch { return null } };
-const ecrire = (k,v) => { try { localStorage.setItem(k, JSON.stringify(v)) } catch {} };
-
-let DATA = null, DEFAUTS = {}, masques = new Set(lire(LS.masq) || []), nouveaux = new Set();
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const nb = n => (n === null || n === undefined || isNaN(n)) ? '?' : Math.round(n).toLocaleString('fr-FR');
 const jour = s => s ? new Date(s).toLocaleDateString('fr-FR', {day:'2-digit', month:'short'}) : null;
@@ -115,133 +50,42 @@ function depuis(iso){
   return h < 24 ? `il y a ${h} h` : `il y a ${Math.round(h / 24)} j`;
 }
 
-async function charger(){
-  try {
-    const r = await fetch('lots.json?t=' + Date.now(), {cache:'no-store'});
-    if (!r.ok) throw new Error(r.status);
-    DATA = await r.json();
-  } catch (e) {
-    $('#maj').textContent = 'lots.json introuvable — lance le scraper puis publie';
-    $('#liste').innerHTML = '<div class="empty">Aucune donnée pour l’instant.<br>Lance <code>python build_site.py</code> puis <code>./publish.sh</code>.</div>';
-    return;
-  }
-  const c = DATA.config || {};
-  DEFAUTS = {budget:'', km:'', gar:'', soh:'', dist:''};   // aucun filtre au départ : on filtre ici, dans le front
-  const f = lire(LS.filtres) || {};
-  for (const k of ['budget','km','gar','soh','dist']) $('#'+k).value = (f[k] ?? DEFAUTS[k] ?? '');
-  if (f.tri) $('#tri').value = f.tri;
-
-  const vus = new Set(lire(LS.vus) || []);
-  const ids = DATA.lots.filter(l => l.retenu).map(l => l.id);
-  nouveaux = new Set(ids.filter(i => !vus.has(i)));
-  ecrire(LS.vus, [...new Set([...vus, ...ids])]);
-
-  const actifs = new Set((f.modeles) || []);
-  const noms = [...new Set(DATA.lots.filter(l => l.modele).map(l => l.modele))].sort();
-  $('#modeles').innerHTML = noms.map(n =>
-    `<span class="chip" role="button" data-m="${esc(n)}" aria-pressed="${actifs.has(n)}">${esc(n)}</span>`).join('');
-  $('#modeles').querySelectorAll('.chip').forEach(ch => ch.onclick = () => {
-    ch.setAttribute('aria-pressed', ch.getAttribute('aria-pressed') !== 'true'); rendre();
-  });
-  if (f.ecartes ?? true) $('#t-ecartes').setAttribute('aria-pressed','true');
-  $('#maj').textContent = 'mis à jour ' + depuis(DATA.genere_le);
-  rendre();
-}
-
-function etat(){
-  const num = id => { const v = parseFloat($('#'+id).value); return isNaN(v) ? null : v; };
-  return {
-    budget:num('budget'), km:num('km'), gar:num('gar'), soh:num('soh'), dist:num('dist'),
-    tri: $('#tri').value,
-    modeles: [...$('#modeles').querySelectorAll('[aria-pressed=true]')].map(c => c.dataset.m),
-    ecartes: $('#t-ecartes').getAttribute('aria-pressed') === 'true',
-    masq: $('#t-masques').getAttribute('aria-pressed') === 'true',
-  };
-}
-
-function garde(l, f){
-  if (f.modeles.length && !f.modeles.includes(l.modele)) return false;   // lots hors modèles ciblés : visibles avec « lots écartés »
-  if (!f.ecartes && !l.retenu) return false;
-  if (masques.has(l.id) !== f.masq) return false;
-  if (f.budget !== null && l.prix_final && l.prix_final > f.budget) return false;
-  if (f.km !== null && l.km && l.km > f.km) return false;
-  if (f.gar !== null && l.garantie_restante_ans !== null && l.garantie_restante_ans < f.gar) return false;
-  if (f.soh !== null && l.soh && l.soh < f.soh) return false;
-  if (f.dist !== null && l.distance_km !== null && l.distance_km > f.dist) return false;
-  return true;
-}
-
 function carte(l){
-  const t = [];
-  if (nouveaux.has(l.id)) t.push('<span class="tag n">NOUVEAU</span>');
-  if (l.prix_estime) t.push('<span class="tag w">prix estimé depuis la mise à prix</span>');
-  if (l.manque && l.manque.length) t.push(`<span class="tag w">manque : ${esc(l.manque.join(', '))}</span>`);
-  if (!l.retenu) t.push(`<span class="tag w">écarté : ${esc((l.raisons||[]).join(' · '))}</span>`);
-  if (l.prix_final && l.prix_max_conseille && l.prix_final > l.prix_max_conseille)
-    t.push('<span class="tag w">au-dessus du prix max conseillé</span>');
-  const img = l.image ? `<img class="thumb" src="${esc(l.image)}" loading="lazy" alt="">`
-                      : '<div class="thumb">⚡</div>';
+  const img = l.image ? `<img class="thumb" src="${esc(l.image)}" loading="lazy" alt="">` : '<div class="thumb">⚡</div>';
+  const lieu = [l.ville, l.dept].filter(Boolean).join(' · ');
   const f = [
     `<span>${esc(l.annee ?? '?')}</span>`,
     `<span><b>${nb(l.km)}</b> km</span>`,
-    `<span><b>${nb(l.prix_final)} €</b> frais compris</span>`,
-    `<span>~<b>${nb(l.mensualite)}</b> €/mois</span>`,
-    `<span>garantie batt. <b>${l.garantie_restante_ans ?? '?'}</b> ans</span>`,
-    `<span>SoH ${l.soh ? '<b>'+l.soh+' %</b>' : 'à demander'}</span>`,
-    l.distance_km !== null && l.distance_km !== undefined ? `<span>${nb(l.distance_km)} km d’ici</span>` : '',
+    `<span><b>${nb(l.prix)} €</b>${l.prix_type ? ' <small>(' + esc(l.prix_type) + ')</small>' : ''}</span>`,
+    l.kwh ? `<span>${esc(l.kwh)} kWh</span>` : '',
+    l.soh ? `<span>SoH <b>${esc(l.soh)} %</b></span>` : '',
+    lieu ? `<span>${esc(lieu)}</span>` : '',
     jour(l.date_vente) ? `<span>vente ${jour(l.date_vente)}</span>` : '',
-    `<span>${esc(l.site)}</span>`,
-    l.prix_max_conseille ? `<span>max conseillé <b>${nb(l.prix_max_conseille)} €</b></span>` : '',
   ].join('');
-  return `<a class="card ${l.retenu ? '' : 'out'}" href="${esc(l.url)}" target="_blank" rel="noopener">
-    ${img}
-    <div class="body">
-      <div class="top"><div><div class="name">${esc(l.modele || l.titre || "?")}</div>
-      <div class="sub">${esc(l.titre || '')}</div></div><span class="score">${l.score}</span></div>
-      <div class="facts">${f}</div><div class="tags">${t.join('')}</div>
-    </div>
-    <button class="hide" data-id="${esc(l.id)}" title="masquer ce lot">×</button></a>`;
+  const t = [`<span class="tag">${esc(l.site)}</span>`];
+  if (l.perime) t.push('<span class="tag">données de la veille</span>');
+  return `<a class="card" href="${esc(l.url)}" target="_blank" rel="noopener">${img}
+    <div class="body"><div class="name">${esc(l.titre || '?')}</div>
+    <div class="facts">${f}</div><div>${t.join('')}</div></div></a>`;
 }
 
-function rendre(){
-  if (!DATA) return;
-  const f = etat();
-  ecrire(LS.filtres, f);
-  const cle = f.tri, croissant = ['prix_final','km','distance_km','date_vente'].includes(cle);
-  const lots = DATA.lots.filter(l => garde(l, f)).sort((a, b) => {
-    const x = a[cle], y = b[cle];
-    if (x == null) return 1; if (y == null) return -1;
-    return croissant ? (x > y ? 1 : x < y ? -1 : 0) : (y > x ? 1 : y < x ? -1 : 0);
-  });
-  $('#liste').innerHTML = lots.map(carte).join('') ||
-    '<div class="empty">Aucun lot ne correspond à ces filtres.</div>';
-  $('#liste').querySelectorAll('.hide').forEach(b => b.onclick = ev => {
-    ev.preventDefault(); ev.stopPropagation();
-    masques.has(b.dataset.id) ? masques.delete(b.dataset.id) : masques.add(b.dataset.id);
-    ecrire(LS.masq, [...masques]); rendre();
-  });
-  const n = DATA.lots.filter(l => l.retenu).length;
-  $('#bar').innerHTML = `<strong>${lots.length}</strong> affiché(s) · ${n} retenu(s) sur ${DATA.lots.length} analysés`
-    + (nouveaux.size ? ` · <strong>${nouveaux.size} nouveau(x)</strong>` : '');
-  const fin = DATA.financement || {};
-  $('#pied').textContent = `Financement simulé : ${nb(fin.apport)} € d’apport, ${nb(fin.tranche1)} € à `
-    + `${(fin.taux1*100).toFixed(1)} %, le reste à ${(fin.taux2*100).toFixed(1)} %, sur ${fin.mois} mois. `
-    + `Achat en l’état, sans essai : exige le rapport d’expertise et le certificat SoH avant d’enchérir.`;
+async function charger(){
+  let d;
+  try {
+    const r = await fetch('lots.json?t=' + Date.now(), {cache:'no-store'});
+    if (!r.ok) throw new Error(r.status);
+    d = await r.json();
+  } catch (e) {
+    $('#maj').textContent = 'lots.json introuvable';
+    $('#liste').innerHTML = '<div class="empty">Aucune donnée pour l’instant.</div>';
+    return;
+  }
+  $('#maj').textContent = 'mis à jour ' + depuis(d.genere_le);
+  const par = Object.entries(d.sites || {}).map(([s, n]) => `${s} ${n}`).join(' · ');
+  $('#bar').innerHTML = `<strong>${d.lots.length}</strong> véhicules électriques · ${esc(par)}`;
+  $('#liste').innerHTML = d.lots.map(carte).join('') || '<div class="empty">Aucun lot.</div>';
 }
-
-['budget','km','gar','soh','dist','tri'].forEach(id => $('#'+id).oninput = rendre);
-['t-ecartes','t-masques'].forEach(id => $('#'+id).onclick = e => {
-  e.target.setAttribute('aria-pressed', e.target.getAttribute('aria-pressed') !== 'true'); rendre();
-});
-$('#t-reset').onclick = () => {
-  for (const k in DEFAUTS) $('#'+k).value = DEFAUTS[k] ?? '';
-  $('#modeles').querySelectorAll('.chip').forEach(c => c.setAttribute('aria-pressed','false'));
-  $('#t-ecartes').setAttribute('aria-pressed','true'); $('#t-masques').setAttribute('aria-pressed','false');
-  rendre();
-};
 charger();
-setInterval(charger, 5 * 60 * 1000);
-document.addEventListener('visibilitychange', () => { if (!document.hidden) charger(); });
 </script>
 </body>
 </html>
