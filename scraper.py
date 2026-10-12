@@ -6,11 +6,12 @@ Aucun filtre, aucun scoring : chaque lot trouvé est renvoyé avec les champs br
 Le tri / la recherche se font ensuite dans le front (docs/index.html).
 
 Champs d'un lot : id, site, url, titre, image, annee, km, prix, prix_type, mise_a_prix, frais_inclus,
-                  kwh, soh, ville, dept, date_vente, texte
+                  kwh, soh, ville, dept, date_vente, heure_vente, texte
 (un champ est None quand le site ne l'affiche pas)
 """
 import datetime as dt, json, pathlib, re, time, unicodedata
 from urllib.parse import urljoin
+from zoneinfo import ZoneInfo
 
 import requests
 from bs4 import BeautifulSoup
@@ -63,10 +64,12 @@ def parser_frais_ie(texte, type_vente):
         i = re.search(r"volontaire", t, re.I).start()
         j = re.search(r"l[ée]gaux|judiciaire", t, re.I).start()
         t = t[i:] if type_vente == "voluntary" else (t[j:i] if j < i else t[j:])
-    m = re.search(r"(\d{1,2}(?:[.,]\d{1,2})?)\s*%\s*TTC", t, re.I)
-    if not m:
+    # frais de vente = premier taux « TTC » entre 5 et 30 % (les 1,8 % de live / services ne sont pas des frais de vente)
+    taux = [float(x.replace(",", ".")) for x in re.findall(r"(\d{1,2}(?:[.,]\d{1,2})?)\s*%\s*TTC", t, re.I)]
+    taux = [x for x in taux if 5 <= x <= 30]
+    if not taux:
         return None
-    pct = round(float(m.group(1).replace(",", ".")) / 100, 4)
+    pct = round(taux[0] / 100, 4)
     mini = re.search(r"minimum\s+de\s+(\d+)\s*€", t, re.I)
     fixe = 0
     for motif in (r"(\d+)\s*€\s*(?:TTC\s*)?de frais de vente\b",
@@ -230,7 +233,7 @@ def enregistrer(site, ident, url, titre, image, texte, frais_lot=None, fixe_fich
         "annee": ch.get("annee"), "km": ch.get("km"), "prix": ch.get("prix"), "prix_type": ch.get("prix_type"),
         "mise_a_prix": ch.get("mise_a_prix"), "frais_inclus": ch.get("frais_inclus", False),
         "kwh": ch.get("kwh"), "soh": ch.get("soh"), "ville": ch.get("ville"), "dept": ch.get("dept"),
-        "date_vente": ch.get("date_vente"),
+        "date_vente": ch.get("date_vente"), "heure_vente": ch.get("heure_vente"),
         "frais_estimes": frais, "cout_estime": (ch["prix"] + frais) if ch.get("prix") and frais is not None else None,
         "frais_detail": detail, "frais_source": source, "texte": re.sub(r"\s+", " ", texte).strip()[:500],
     }
@@ -281,17 +284,22 @@ def collecter_vpauto(cfg, debug=False):
         except Exception as e:
             print(f"  ! fiche {l['url']} : {e}")
         lots.append(enregistrer("vpauto", l["ident"], l["url"], fiche.get("titre") or l["texte"][:90], l["image"],
-                                l["texte"], fixe_fiche=fiche.get("frais_dossier"), dept=fiche.get("dept"), ville=fiche.get("ville"),
+                                l["texte"], fixe_fiche=fiche.get("frais_dossier"), date_vente=fiche.get("date_vente"),
+                                heure_vente=fiche.get("heure_vente"), dept=fiche.get("dept"), ville=fiche.get("ville"),
                                 kwh=fiche.get("kwh")))
         time.sleep(DELAI)
     return lots
 
 def lire_fiche_vpauto(soup):
+    vente = soup.find(attrs={"data-end-date": True})          # « 2026/10/26 09:30:00 » = date et heure de la vente
     for tag in soup(["script", "style"]):
         tag.decompose()
     txt = re.sub(r"\s+", " ", soup.get_text(" "))
     h1 = [re.sub(r"\s+", " ", h.get_text(" ")).strip() for h in soup.find_all("h1")]
     o = {"titre": h1[1] if len(h1) > 1 else (h1[0] if h1 else None)}
+    m = vente and re.match(r"(\d{4})/(\d{2})/(\d{2})(?: (\d{2}:\d{2}))?", vente["data-end-date"])
+    if m:
+        o["date_vente"], o["heure_vente"] = f"{m.group(1)}-{m.group(2)}-{m.group(3)}", m.group(4)
     m = re.search(r"Localisation\s*:\s*(\d{2}|2A|2B)\s*-\s*([^:]{2,40}?)(?=\s+(?:Type|Observation|Merci|TVA|Equipements)|$)", txt)
     if m:
         o["dept"], o["ville"] = m.group(1), m.group(2).strip().title()
@@ -362,6 +370,15 @@ def est_electrique_ie(it):
         return ch["fuel_type"] == "electric"
     return bool(re.search(MARQUEURS_ELEC, titre))
 
+def vente_ie(it):
+    """(date, heure) de la vente, convertis en heure de Paris, depuis sale.start_at (UTC)."""
+    brut = (it.get("sale") or {}).get("start_at") or (it.get("sale") or {}).get("datetime")
+    try:
+        d = dt.datetime.fromisoformat(brut.replace("Z", "+00:00")).astimezone(ZoneInfo("Europe/Paris"))
+    except (AttributeError, ValueError):
+        return None, None
+    return d.date().isoformat(), d.strftime("%H:%M")
+
 def lot_interencheres(it, liens):
     lid = str(it.get("id"))
     if lid not in liens or not est_electrique_ie(it):
@@ -375,10 +392,12 @@ def lot_interencheres(it, liens):
     cp = (adr.get("postcode") or "")[:2]
     img = ((it.get("medias") or [{}])[0].get("rewriteImgUrl") or {}).get("md")
     annee = (ch.get("first_registration_date") or "")[:4]
+    date_vente, heure_vente = vente_ie(it)
     return enregistrer("interencheres", lid, urljoin("https://www.interencheres.com/", liens[lid]), titre,
                        ("https:" + img) if img else None, f"{titre} {desc}".replace("\n", " "),
                        frais_lot=parser_frais_ie((it.get("conditions") or {}).get("payment"), it.get("type")),
                        annee=int(annee) if annee.isdigit() else None, km=ch.get("mileage"),
+                       date_vente=date_vente, heure_vente=heure_vente,
                        prix=est.get("max") or None, prix_type="estimation haute" if est.get("max") else None,
                        dept=cp if cp.isdigit() and cp != "20" else None, ville=adr.get("city"))
 

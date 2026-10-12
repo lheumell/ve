@@ -59,6 +59,8 @@ button.reset{margin-left:auto;font:inherit;font-size:13px;border:1px solid var(-
     <label>SoH min %<input id="sohmin" type="number" inputmode="numeric" step="1"></label>
     <label>Batterie min kWh<input id="kwhmin" type="number" inputmode="numeric" step="5"></label>
     <label>Départements<input id="dept" type="text" placeholder="59, 62, 80"></label>
+    <label>Vente à partir du<input id="vdu" type="date"></label>
+    <label>Vente jusqu’au<input id="vau" type="date"></label>
     <label>Trier par<select id="tri">
       <option value="nouveaute">Nouveautés</option>
       <option value="cout_estime">Coût frais compris</option>
@@ -66,7 +68,7 @@ button.reset{margin-left:auto;font:inherit;font-size:13px;border:1px solid var(-
       <option value="km">Kilométrage</option>
       <option value="annee">Année</option>
       <option value="soh">SoH</option>
-      <option value="date_vente">Date de vente</option>
+      <option value="date_vente">Date de vente (la plus proche)</option>
     </select></label>
     <label>Ordre<select id="ordre"><option value="auto">Par défaut</option><option value="asc">Croissant</option><option value="desc">Décroissant</option></select></label>
   </div>
@@ -74,6 +76,7 @@ button.reset{margin-left:auto;font:inherit;font-size:13px;border:1px solid var(-
     <label><input type="checkbox" id="nouveaux"> Nouveaux seulement</label>
     <label><input type="checkbox" id="variation"> Prix modifié seulement</label>
     <label><input type="checkbox" id="avecprix"> Avec prix seulement</label>
+    <label><input type="checkbox" id="avenir"> Ventes à venir seulement</label>
     <label><input type="checkbox" id="inconnus" checked> Garder les lots dont l’info est inconnue</label>
     <button class="reset" id="reset" type="button">Réinitialiser</button>
   </div>
@@ -91,13 +94,13 @@ const lire = () => { try { return JSON.parse(localStorage.getItem(CLE)) || {} } 
 const ecrire = v => { try { localStorage.setItem(CLE, JSON.stringify(v)) } catch {} };
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const nb = n => (n === null || n === undefined || isNaN(n)) ? '?' : Math.round(n).toLocaleString('fr-FR');
-const jour = s => s ? new Date(s).toLocaleDateString('fr-FR', {day:'2-digit', month:'short'}) : null;
+const jour = s => s ? new Date(s + 'T12:00:00').toLocaleDateString('fr-FR', {weekday:'short', day:'numeric', month:'short'}) : null;
 const norm = s => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 const isoJour = d => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
 const ilYa = n => { const d = new Date(); d.setDate(d.getDate() - n); return isoJour(d); };
 
-const CHAMPS = ['q','site','cmin','cmax','kmax','amin','sohmin','kwhmin','dept','tri','ordre'];
-const CASES = ['nouveaux','variation','avecprix','inconnus'];
+const CHAMPS = ['q','site','cmin','cmax','kmax','amin','sohmin','kwhmin','dept','vdu','vau','tri','ordre'];
+const CASES = ['nouveaux','variation','avecprix','avenir','inconnus'];
 let DATA = null;
 
 function depuis(iso){
@@ -136,6 +139,10 @@ function garde(l, f){
   if (!borne(l.kwh, num(f.kwhmin), null)) return false;
   const depts = f.dept.split(/[\s,;]+/).filter(Boolean);
   if (depts.length && !(l.dept ? depts.includes(l.dept) : inc)) return false;
+  if (f.vdu || f.vau || f.avenir) {
+    if (!l.date_vente) { if (!inc) return false; }
+    else if ((f.vdu && l.date_vente < f.vdu) || (f.vau && l.date_vente > f.vau) || (f.avenir && l.date_vente < ilYa(0))) return false;
+  }
   if (f.avecprix && !l.prix) return false;
   if (f.nouveaux && !estNouveau(l)) return false;
   if (f.variation && !variation(l)) return false;
@@ -164,12 +171,15 @@ function carte(l){
     l.kwh ? `<span>${esc(l.kwh)} kWh</span>` : '',
     l.soh ? `<span>SoH <b>${esc(l.soh)} %</b></span>` : '',
     lieu ? `<span>${esc(lieu)}</span>` : '',
-    jour(l.date_vente) ? `<span>vente ${jour(l.date_vente)}</span>` : '',
+    l.date_vente ? `<span>vente <b>${jour(l.date_vente)}</b>${l.heure_vente ? ' à ' + esc(l.heure_vente) : ''}</span>` : '<span><small>date de vente ?</small></span>',
   ].join('');
   const t = [];
   if (estNouveau(l)) t.push('<span class="tag new">NOUVEAU</span>');
   const v = variation(l);
   if (v) t.push(`<span class="tag ${v.delta < 0 ? 'down' : 'up'}">${v.delta < 0 ? '↓' : '↑'} ${nb(Math.abs(v.delta))} € (avant ${nb(v.avant)} €)</span>`);
+  if (l.date_vente === ilYa(0)) t.push('<span class="tag warn">vente aujourd’hui</span>');
+  else if (l.date_vente === ilYa(-1)) t.push('<span class="tag warn">vente demain</span>');
+  else if (l.date_vente && l.date_vente < ilYa(0)) t.push('<span class="tag">vente passée</span>');
   t.push(`<span class="tag">${esc(l.site)}</span>`);
   if (l.perime) t.push('<span class="tag warn">données de la veille</span>');
   return `<a class="card" href="${esc(l.url)}" target="_blank" rel="noopener">${img}
