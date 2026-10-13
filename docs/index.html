@@ -220,11 +220,17 @@ function rendre(){
     + (nouveaux ? ` · ${nouveaux} nouveau(x)` : '') + (modifs ? ` · ${modifs} prix modifié(s)` : '');
 }
 
+function exclusion(data) {
+  if(!data) return
+  return {...data, lots : data.lots.filter((d) => !d.texte.toLowerCase().includes("c-zero") && !d.texte.toLowerCase().includes("2008") && !d.texte.toLowerCase().includes("smart") && !d.texte.toLowerCase().includes("dacia") && !d.texte.toLowerCase().includes("fiat" ) && !d.texte.toLowerCase().includes("zoe") && !d.texte.toLowerCase().includes("corsa") && !d.texte.toLowerCase().includes("mokka"))}
+}
+
 async function charger(){
   try {
     const r = await fetch('lots.json?t=' + Date.now(), {cache:'no-store'});
     if (!r.ok) throw new Error(r.status);
     DATA = await r.json();
+    DATA = exclusion(DATA)
   } catch (e) {
     $('#maj').textContent = 'lots.json introuvable';
     $('#liste').innerHTML = '<div class="empty">Aucune donnée pour l’instant.</div>';
