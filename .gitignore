@@ -6,3 +6,6 @@ cron.log
 .publish.lock
 refresh.log
 serve.log
+telegram.json
+.notifications.json
+favoris.json

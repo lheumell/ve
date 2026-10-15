@@ -41,6 +41,16 @@ button.reset{margin-left:auto;font:inherit;font-size:13px;border:1px solid var(-
 #refresh:disabled{opacity:.6;cursor:progress}
 #etat{margin-top:10px;padding:8px 12px;border-radius:10px;background:var(--card);font-size:13px;box-shadow:0 1px 3px #0002}
 #etat.err{color:var(--up)}
+.card{position:relative}
+.fav{position:absolute;top:6px;right:6px;font-size:22px;line-height:1;border:0;background:var(--card);color:var(--mut);border-radius:50%;width:36px;height:36px;cursor:pointer;box-shadow:0 1px 3px #0003}
+.fav.on{color:#e0a100}
+.tag.fav-tag{background:#e0a100;color:#fff}
+.tag.score{background:var(--line);color:var(--txt);font-weight:700}
+.tag.hot{background:var(--warn);color:#fff;font-weight:700}
+.card.retire{opacity:.65}
+.outils{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.outils button,.chip{font:inherit;font-size:13px;border:1px solid var(--line);background:none;color:var(--txt);border-radius:999px;padding:4px 12px;cursor:pointer}
+.chip.on{background:#e0a100;border-color:#e0a100;color:#fff}
 .empty{padding:26px 10px;text-align:center;color:var(--mut)}
 @media(max-width:560px){.thumb{width:96px;height:84px}}
 </style>
@@ -68,6 +78,7 @@ button.reset{margin-left:auto;font:inherit;font-size:13px;border:1px solid var(-
     <label>Vente jusqu’au<input id="vau" type="date"></label>
     <label>Trier par<select id="tri">
       <option value="nouveaute">Nouveautés</option>
+      <option value="score">Score</option>
       <option value="cout_estime">Coût frais compris</option>
       <option value="prix">Prix</option>
       <option value="km">Kilométrage</option>
@@ -84,6 +95,12 @@ button.reset{margin-left:auto;font:inherit;font-size:13px;border:1px solid var(-
     <label><input type="checkbox" id="avenir"> Ventes à venir seulement</label>
     <label><input type="checkbox" id="inconnus" checked> Garder les lots dont l’info est inconnue</label>
     <button class="reset" id="reset" type="button">Réinitialiser</button>
+  </div>
+  <div class="outils">
+    <button class="chip" id="chipfav" type="button" aria-pressed="false">★ Mes favoris</button>
+    <button type="button" id="exportfav">⬇ Exporter mes favoris</button>
+    <button type="button" id="importfav">⬆ Importer des favoris</button>
+    <input type="file" id="fichierfav" accept="application/json,.json" hidden>
   </div>
 </div>
 
@@ -106,6 +123,13 @@ const ilYa = n => { const d = new Date(); d.setDate(d.getDate() - n); return iso
 
 const CHAMPS = ['q','site','cmin','cmax','kmax','amin','sohmin','kwhmin','dept','vdu','vau','tri','ordre'];
 const CASES = ['nouveaux','variation','avecprix','avenir','inconnus'];
+let ALL = [];                      // catalogue complet (les exclusions ne masquent pas un favori)
+let FAVS = lirefavs();             // {id: résumé} gardé dans le navigateur
+function lirefavs(){ try { return JSON.parse(localStorage.getItem('ve.favoris')) || {} } catch { return {} } }
+function ecrirefavs(){ try { localStorage.setItem('ve.favoris', JSON.stringify(FAVS)) } catch {} }
+const resume = l => ({id:l.id, titre:l.titre, url:l.url, site:l.site, date_vente:l.date_vente ?? null, heure_vente:l.heure_vente ?? null,
+  prix:l.prix ?? null, mise_a_prix:l.mise_a_prix ?? null, prix_max_conseille:l.prix_max_conseille ?? null});
+const joursAvant = s => s ? Math.round((new Date(s + 'T12:00:00') - new Date(ilYa(0) + 'T12:00:00')) / 864e5) : null;
 let DATA = null;
 
 function depuis(iso){
@@ -182,21 +206,36 @@ function carte(l){
   if (estNouveau(l)) t.push('<span class="tag new">NOUVEAU</span>');
   const v = variation(l);
   if (v) t.push(`<span class="tag ${v.delta < 0 ? 'down' : 'up'}">${v.delta < 0 ? '↓' : '↑'} ${nb(Math.abs(v.delta))} € (avant ${nb(v.avant)} €)</span>`);
-  if (l.date_vente === ilYa(0)) t.push('<span class="tag warn">vente aujourd’hui</span>');
-  else if (l.date_vente === ilYa(-1)) t.push('<span class="tag warn">vente demain</span>');
-  else if (l.date_vente && l.date_vente < ilYa(0)) t.push('<span class="tag">vente passée</span>');
+  const j = joursAvant(l.date_vente);
+  if (j === 0) t.push('<span class="tag hot">vente AUJOURD’HUI</span>');
+  else if (j === 1) t.push('<span class="tag hot">vente DEMAIN</span>');
+  else if (j > 1 && j <= 7) t.push(`<span class="tag warn">vente dans ${j} jours</span>`);
+  else if (j < 0) t.push('<span class="tag">vente passée</span>');
+  if (l.score !== undefined) t.push(`<span class="tag score" title="Note 0-100 : coût, km, année, SoH, batterie">score ${l.score}</span>`);
+  if (l.prix_max_conseille) t.push(`<span class="tag">prix max conseillé ${nb(l.prix_max_conseille)} €</span>`);
   t.push(`<span class="tag">${esc(l.site)}</span>`);
   if (l.perime) t.push('<span class="tag warn">données de la veille</span>');
-  return `<a class="card" href="${esc(l.url)}" target="_blank" rel="noopener">${img}
+  const fav = !!FAVS[l.id];
+  return `<a class="card" href="${esc(l.url)}" target="_blank" rel="noopener">
+    <button class="fav${fav ? ' on' : ''}" type="button" data-id="${esc(l.id)}" aria-pressed="${fav}" title="${fav ? 'Retirer des favoris' : 'Mettre en favori'}">${fav ? '★' : '☆'}</button>${img}
     <div class="body"><div class="name">${esc(l.titre || '?')}</div>${cout}
     <div class="facts">${f}</div><div>${t.join('')}</div></div></a>`;
+}
+
+function carteRetiree(r){
+  const j = joursAvant(r.date_vente);
+  return `<a class="card retire" href="${esc(r.url)}" target="_blank" rel="noopener">
+    <button class="fav on" type="button" data-id="${esc(r.id)}" aria-pressed="true" title="Retirer des favoris">★</button>
+    <div class="thumb">⚡</div><div class="body"><div class="name">${esc(r.titre || r.id)}</div>
+    <div class="facts"><span>${r.date_vente ? 'vente ' + jour(r.date_vente) : 'date de vente ?'}</span></div>
+    <div><span class="tag warn">${j !== null && j < 0 ? 'vente passée' : 'plus dans le catalogue'}</span><span class="tag">${esc(r.site || '')}</span></div></div></a>`;
 }
 
 function trier(lots, f){
   const k = f.tri;
   const val = l => k === 'nouveaute' ? (l.premiere_vue || '') : l[k];
   // sens par défaut : nouveautés/année/SoH/date décroissants, le reste croissant
-  const defDesc = ['nouveaute', 'annee', 'soh'].includes(k);
+  const defDesc = ['nouveaute', 'annee', 'soh', 'score'].includes(k);
   const desc = f.ordre === 'desc' || (f.ordre === 'auto' && defDesc);
   return lots.sort((a, b) => {
     const x = val(a), y = val(b);
@@ -212,17 +251,24 @@ function rendre(){
   if (!DATA) return;
   const f = etat();
   ecrire(f);
-  const lots = trier(DATA.lots.filter(l => garde(l, f)), f);
-  $('#liste').innerHTML = lots.slice(0, 400).map(carte).join('') || '<div class="empty">Aucun lot ne correspond à ces filtres.</div>';
+  const solo = $('#chipfav').classList.contains('on');
+  // mode favoris : tous les favoris, filtres ignorés (un lot qui dépasse ton budget reste visible)
+  const lots = solo ? trier(ALL.filter(l => FAVS[l.id]), f) : trier(DATA.lots.filter(l => garde(l, f)), f);
+  const retires = solo ? Object.values(FAVS).filter(r => !ALL.some(l => l.id === r.id)) : [];
+  $('#liste').innerHTML = lots.slice(0, 400).map(carte).join('') + retires.map(carteRetiree).join('')
+    || `<div class="empty">${solo ? 'Aucun favori : clique sur ☆ sur une carte.' : 'Aucun lot ne correspond à ces filtres.'}</div>`;
+  $('#chipfav').textContent = `★ Mes favoris (${Object.keys(FAVS).length})`;
   const nouveaux = DATA.lots.filter(estNouveau).length;
   const modifs = DATA.lots.filter(variation).length;
-  $('#bar').innerHTML = `<strong>${lots.length}</strong> affiché(s) sur ${DATA.lots.length}`
+  const nfav = Object.keys(FAVS).length;
+  $('#bar').innerHTML = `<strong>${lots.length + retires.length}</strong> affiché(s) sur ${solo ? Object.keys(FAVS).length : DATA.lots.length}`
+    + (nfav ? ` · ★ ${nfav} favori(s)` : '')
     + (nouveaux ? ` · ${nouveaux} nouveau(x)` : '') + (modifs ? ` · ${modifs} prix modifié(s)` : '');
 }
 
 function exclusion(data) {
   if(!data) return
-  return {...data, lots : data.lots.filter((d) => !d.texte.toLowerCase().includes("c-zero") && !d.texte.toLowerCase().includes("2008") && !d.texte.toLowerCase().includes("smart") && !d.texte.toLowerCase().includes("dacia") && !d.texte.toLowerCase().includes("fiat" ) && !d.texte.toLowerCase().includes("zoe") && !d.texte.toLowerCase().includes("corsa") && !d.texte.toLowerCase().includes("mokka"))}
+  return {...data, lots : data.lots.filter((d) => !(d.texte || '').toLowerCase().includes("c-zero") && !d.texte.toLowerCase().includes("2008") && !d.texte.toLowerCase().includes("smart") && !d.texte.toLowerCase().includes("dacia") && !d.texte.toLowerCase().includes("fiat" ) && !d.texte.toLowerCase().includes("zoe") && !d.texte.toLowerCase().includes("corsa") && !d.texte.toLowerCase().includes("mokka"))}
 }
 
 async function charger(){
@@ -230,7 +276,10 @@ async function charger(){
     const r = await fetch('lots.json?t=' + Date.now(), {cache:'no-store'});
     if (!r.ok) throw new Error(r.status);
     DATA = await r.json();
-    DATA = exclusion(DATA)
+    ALL = DATA.lots;
+    DATA = exclusion(DATA);
+    for (const l of ALL) if (FAVS[l.id]) FAVS[l.id] = resume(l);   // garde le résumé à jour
+    ecrirefavs();
   } catch (e) {
     $('#maj').textContent = 'lots.json introuvable';
     $('#liste').innerHTML = '<div class="empty">Aucune donnée pour l’instant.</div>';
@@ -245,6 +294,33 @@ async function charger(){
   [...CHAMPS.map(k => '#' + k), ...CASES.map(k => '#' + k)].forEach(s => {
     $(s).addEventListener('input', rendre); $(s).addEventListener('change', rendre);
   });
+  $('#liste').addEventListener('click', e => {
+    const b = e.target.closest('.fav'); if (!b) return;
+    e.preventDefault(); e.stopPropagation();
+    const id = b.dataset.id, l = ALL.find(x => x.id === id);
+    if (FAVS[id]) delete FAVS[id]; else FAVS[id] = l ? resume(l) : {id};
+    ecrirefavs(); rendre();
+  });
+  $('#chipfav').onclick = () => { const c = $('#chipfav'); const on = !c.classList.contains('on'); c.classList.toggle('on', on); c.setAttribute('aria-pressed', on); rendre(); };
+  $('#exportfav').onclick = () => {
+    const favoris = Object.values(FAVS).map(r => { const l = ALL.find(x => x.id === r.id); return l ? resume(l) : r; });
+    const blob = new Blob([JSON.stringify({version:1, exporte_le:new Date().toISOString(), favoris}, null, 1)], {type:'application/json'});
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'favoris.json'; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  };
+  $('#importfav').onclick = () => $('#fichierfav').click();
+  $('#fichierfav').onchange = async e => {
+    const fichier = e.target.files[0]; e.target.value = ''; if (!fichier) return;
+    try {
+      const j = JSON.parse(await fichier.text());
+      const items = (Array.isArray(j) ? j : j.favoris || []).map(x => typeof x === 'string' ? {id:x} : x).filter(x => x && x.id);
+      if (!items.length) throw new Error('vide');
+      let ajoutes = 0;
+      for (const x of items) { if (!FAVS[x.id]) ajoutes++; const l = ALL.find(y => y.id === x.id); FAVS[x.id] = l ? resume(l) : {...FAVS[x.id], ...x}; }
+      ecrirefavs(); rendre();
+      alert(`${ajoutes} favori(s) ajouté(s), ${items.length - ajoutes} déjà présent(s).`);
+    } catch { alert('Fichier de favoris illisible.'); }
+  };
   $('#reset').onclick = () => {
     for (const k of CHAMPS) $('#' + k).value = k === 'tri' ? 'nouveaute' : k === 'ordre' ? 'auto' : '';
     for (const k of CASES) $('#' + k).checked = k === 'inconnus';

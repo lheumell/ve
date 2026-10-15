@@ -5,7 +5,8 @@ Scraper local + site statique publié sur GitHub Pages. Le scraper tourne chez t
 
 ```
 scraper.py       moteur : extraction, filtres, scoring (ne pas toucher au début)
-build_site.py    collecte → docs/lots.json
+build_site.py    collecte → docs/lots.json (+ score et prix max conseillé)
+notify.py        alertes Telegram (nouveaux lots, favoris)
 publish.sh       build + commit + push
 docs/index.html  le site (filtres, tri, badges NOUVEAU, masquage de lots)
 docs/lots.json   les données, régénérées à chaque passage
@@ -58,7 +59,31 @@ restante minimale, financement, frais par site. Les modèles ciblés sont dans
 conseillé** par lot (enchère maximale pour rester sous le budget, frais de vente
 et carte grise compris).
 
-## 5. Quand un site ne remonte rien
+## 5. Favoris
+
+Sur chaque carte, **☆** met le lot en favori (gardé dans le navigateur). Le chip
+**★ Mes favoris** n'affiche que les favoris, filtres ignorés : un lot qui a dépassé
+ton budget reste visible, et un lot retiré du catalogue reste listé (grisé).
+**⬇ Exporter** télécharge `favoris.json` ; **⬆ Importer** le relit et fusionne
+(pour passer du téléphone au PC). Les ventes à moins de 7 jours ont un badge
+« AUJOURD'HUI / DEMAIN / dans X jours ».
+
+## 6. Alertes Telegram
+
+1. Crée un bot avec @BotFather, récupère le token, puis envoie un message au bot et lis ton `chat_id`
+   sur `https://api.telegram.org/bot<TOKEN>/getUpdates`.
+2. Crée `telegram.json` à la racine : `{"token": "...", "chat_id": "..."}` (ignoré par git).
+3. Dépose ton `favoris.json` exporté à la racine (ignoré par git).
+
+`publish.sh` lance `notify.py` après chaque collecte. Alertes, chacune envoyée une seule fois
+(état dans `.notifications.json`) : nouveau lot de score ≥ 55, rappel de vente d'un favori à
+J-3 / J-1 / jour J, variation de prix d'un favori > 200 €, favori retiré avant sa vente.
+Le premier lancement initialise l'état sans rien envoyer. Test : `python notify.py --dry-run`.
+
+Le score (0-100) pèse coût frais compris (50), km (15), année (10), SoH (15), batterie (10) ;
+`BUDGET` en haut de `build_site.py` règle le budget et le prix max conseillé.
+
+## 7. Quand un site ne remonte rien
 
 ```bash
 ./publish.sh --debug --visible

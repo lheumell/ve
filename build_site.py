@@ -34,6 +34,49 @@ def historiser(lots, precedents, aujourdhui):
             l.pop("prix_precedent"); l.pop("prix_change_le")
 
 
+# Budget total visé, frais de vente compris (+ carte grise si CARTE_GRISE > 0). À ajuster.
+BUDGET = 18000
+CARTE_GRISE = 0
+
+
+def prix_max_conseille(lot):
+    """Enchère maximale (arrondie à 100 €) qui garde le coût frais compris sous BUDGET. Barème du site."""
+    site = lot.get("site")
+    if site not in S.FRAIS_SITE:
+        return None
+    def cout(p):
+        frais, _, _ = S.calcul_frais(site, p, frais_inclus=bool(lot.get("frais_inclus")))
+        return p + frais + CARTE_GRISE
+    bas, haut = 0, BUDGET // 100
+    if cout(100) > BUDGET:
+        return None
+    while bas < haut:                       # dichotomie : le coût est croissant avec le prix
+        m = (bas + haut + 1) // 2
+        if cout(m * 100) <= BUDGET:
+            bas = m
+        else:
+            haut = m - 1
+    return bas * 100
+
+
+def score(lot):
+    """Note 0-100 : coût vs budget (50), kilométrage (15), année (10), SoH (15), batterie (10). Inconnu = note basse."""
+    clamp = lambda x: max(0.0, min(1.0, x))
+    cout = lot.get("cout_estime")
+    s = 10 if not cout else 50 * clamp((BUDGET * 1.1 - cout) / (BUDGET * 0.5))    # 50 sous 60 % du budget, 0 à 110 %
+    s += 4 if lot.get("km") is None else 15 * clamp((120000 - lot["km"]) / 100000)
+    s += 3 if lot.get("annee") is None else 10 * clamp((lot["annee"] - 2018) / 8)
+    s += 3 if lot.get("soh") is None else 15 * clamp((lot["soh"] - 80) / 18)
+    s += 3 if lot.get("kwh") is None else 10 * clamp((lot["kwh"] - 40) / 50)
+    return round(s)
+
+
+def enrichir(lots):
+    for l in lots:
+        l["prix_max_conseille"] = prix_max_conseille(l)
+        l["score"] = score(l)
+
+
 def main():
     a = argparse.ArgumentParser()
     a.add_argument("--sites", default=",".join(S.SITES))
@@ -67,6 +110,7 @@ def main():
     lots += [l for l in precedents if l.get("site") not in demandes and l.get("site") in S.SITES]
 
     historiser(lots, precedents, dt.date.today().isoformat())
+    enrichir(lots)
     comptes = dict(collections.Counter(l["site"] for l in lots))      # total réel, même après un run partiel
 
     charge = {

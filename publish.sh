@@ -46,3 +46,6 @@ if [ -n "$(git status --porcelain docs/lots.json)" ]; then
 else
   echo "aucun changement"
 fi
+
+# Alertes Telegram (voir notify.py) : un bot absent ou en panne ne doit jamais bloquer la publication.
+"$PYTHON" notify.py || echo "notify.py a échoué (ignoré)"
