@@ -17693,7 +17693,10 @@
    "premiere_vue": "2026-10-15",
    "prix_max_conseille": 15500,
    "score": 61,
-   "derniere_vue": "2026-10-19"
+   "derniere_vue": "2026-10-19",
+   "vendu": true,
+   "prix_adjuge": 3100,
+   "adjuge_le": "2026-10-19"
   },
   "interencheres:89345434": {
    "id": "interencheres:89345434",
@@ -17721,7 +17724,10 @@
    "premiere_vue": "2026-10-15",
    "prix_max_conseille": 15500,
    "score": 26,
-   "derniere_vue": "2026-10-19"
+   "derniere_vue": "2026-10-19",
+   "vendu": true,
+   "prix_adjuge": 22600,
+   "adjuge_le": "2026-10-19"
   },
   "interencheres:89345592": {
    "id": "interencheres:89345592",
@@ -17749,7 +17755,10 @@
    "premiere_vue": "2026-10-15",
    "prix_max_conseille": 15500,
    "score": 57,
-   "derniere_vue": "2026-10-19"
+   "derniere_vue": "2026-10-19",
+   "vendu": false,
+   "prix_adjuge": null,
+   "adjuge_le": "2026-10-19"
   },
   "interencheres:89345611": {
    "id": "interencheres:89345611",
@@ -17777,7 +17786,10 @@
    "premiere_vue": "2026-10-15",
    "prix_max_conseille": 15500,
    "score": 26,
-   "derniere_vue": "2026-10-19"
+   "derniere_vue": "2026-10-19",
+   "vendu": false,
+   "prix_adjuge": null,
+   "adjuge_le": "2026-10-19"
   },
   "interencheres:89345683": {
    "id": "interencheres:89345683",
@@ -17805,7 +17817,10 @@
    "premiere_vue": "2026-10-15",
    "prix_max_conseille": 15500,
    "score": 64,
-   "derniere_vue": "2026-10-19"
+   "derniere_vue": "2026-10-19",
+   "vendu": true,
+   "prix_adjuge": 12900,
+   "adjuge_le": "2026-10-19"
   },
   "interencheres:89389622": {
    "id": "interencheres:89389622",
@@ -17833,7 +17848,10 @@
    "premiere_vue": "2026-10-19",
    "prix_max_conseille": 15500,
    "score": 56,
-   "derniere_vue": "2026-10-19"
+   "derniere_vue": "2026-10-19",
+   "vendu": true,
+   "prix_adjuge": 4300,
+   "adjuge_le": "2026-10-19"
   },
   "interencheres:89389648": {
    "id": "interencheres:89389648",
@@ -17861,7 +17879,10 @@
    "premiere_vue": "2026-10-19",
    "prix_max_conseille": 15500,
    "score": 58,
-   "derniere_vue": "2026-10-19"
+   "derniere_vue": "2026-10-19",
+   "vendu": true,
+   "prix_adjuge": 6300,
+   "adjuge_le": "2026-10-19"
   },
   "interencheres:89390799": {
    "id": "interencheres:89390799",
@@ -17889,7 +17910,10 @@
    "premiere_vue": "2026-10-19",
    "prix_max_conseille": 15500,
    "score": 34,
-   "derniere_vue": "2026-10-19"
+   "derniere_vue": "2026-10-19",
+   "vendu": true,
+   "prix_adjuge": 32400,
+   "adjuge_le": "2026-10-19"
   },
   "interencheres:89391256": {
    "id": "interencheres:89391256",
@@ -17917,7 +17941,10 @@
    "premiere_vue": "2026-10-19",
    "prix_max_conseille": 15500,
    "score": 33,
-   "derniere_vue": "2026-10-19"
+   "derniere_vue": "2026-10-19",
+   "vendu": true,
+   "prix_adjuge": 43100,
+   "adjuge_le": "2026-10-19"
   },
   "interencheres:89391400": {
    "id": "interencheres:89391400",
@@ -17945,7 +17972,10 @@
    "premiere_vue": "2026-10-19",
    "prix_max_conseille": 15500,
    "score": 19,
-   "derniere_vue": "2026-10-19"
+   "derniere_vue": "2026-10-19",
+   "vendu": true,
+   "prix_adjuge": 28900,
+   "adjuge_le": "2026-10-19"
   },
   "interencheres:89391407": {
    "id": "interencheres:89391407",
@@ -17973,7 +18003,10 @@
    "premiere_vue": "2026-10-19",
    "prix_max_conseille": 15500,
    "score": 25,
-   "derniere_vue": "2026-10-19"
+   "derniere_vue": "2026-10-19",
+   "vendu": true,
+   "prix_adjuge": 30000,
+   "adjuge_le": "2026-10-19"
   },
   "interencheres:89206158": {
    "id": "interencheres:89206158",
@@ -18001,7 +18034,10 @@
    "premiere_vue": null,
    "prix_max_conseille": 15500,
    "score": 61,
-   "derniere_vue": "2026-10-19"
+   "derniere_vue": "2026-10-19",
+   "vendu": true,
+   "prix_adjuge": 6500,
+   "adjuge_le": "2026-10-19"
   },
   "interencheres:89308502": {
    "id": "interencheres:89308502",
@@ -18029,7 +18065,10 @@
    "premiere_vue": "2026-10-19",
    "prix_max_conseille": 15500,
    "score": 66,
-   "derniere_vue": "2026-10-19"
+   "derniere_vue": "2026-10-19",
+   "vendu": true,
+   "prix_adjuge": 10800,
+   "adjuge_le": "2026-10-19"
   },
   "interencheres:89308530": {
    "id": "interencheres:89308530",
@@ -18057,7 +18096,10 @@
    "premiere_vue": "2026-10-19",
    "prix_max_conseille": 15500,
    "score": 63,
-   "derniere_vue": "2026-10-19"
+   "derniere_vue": "2026-10-19",
+   "vendu": true,
+   "prix_adjuge": 8300,
+   "adjuge_le": "2026-10-19"
   },
   "interencheres:89308532": {
    "id": "interencheres:89308532",
@@ -18085,7 +18127,10 @@
    "premiere_vue": "2026-10-14",
    "prix_max_conseille": 15500,
    "score": 64,
-   "derniere_vue": "2026-10-19"
+   "derniere_vue": "2026-10-19",
+   "vendu": true,
+   "prix_adjuge": 9800,
+   "adjuge_le": "2026-10-19"
   },
   "interencheres:89308566": {
    "id": "interencheres:89308566",
@@ -18113,7 +18158,10 @@
    "premiere_vue": "2026-10-19",
    "prix_max_conseille": 15500,
    "score": 62,
-   "derniere_vue": "2026-10-19"
+   "derniere_vue": "2026-10-19",
+   "vendu": true,
+   "prix_adjuge": 4600,
+   "adjuge_le": "2026-10-19"
   },
   "interencheres:89308685": {
    "id": "interencheres:89308685",
@@ -18141,7 +18189,10 @@
    "premiere_vue": "2026-10-14",
    "prix_max_conseille": 15500,
    "score": 57,
-   "derniere_vue": "2026-10-19"
+   "derniere_vue": "2026-10-19",
+   "vendu": true,
+   "prix_adjuge": 12000,
+   "adjuge_le": "2026-10-19"
   },
   "interencheres:89308858": {
    "id": "interencheres:89308858",
@@ -18169,7 +18220,10 @@
    "premiere_vue": "2026-10-14",
    "prix_max_conseille": 15500,
    "score": 23,
-   "derniere_vue": "2026-10-19"
+   "derniere_vue": "2026-10-19",
+   "vendu": true,
+   "prix_adjuge": 28200,
+   "adjuge_le": "2026-10-19"
   },
   "interencheres:89333183": {
    "id": "interencheres:89333183",
@@ -18197,7 +18251,10 @@
    "premiere_vue": "2026-10-19",
    "prix_max_conseille": 15500,
    "score": 17,
-   "derniere_vue": "2026-10-19"
+   "derniere_vue": "2026-10-19",
+   "vendu": true,
+   "prix_adjuge": 20200,
+   "adjuge_le": "2026-10-19"
   },
   "interencheres:89366096": {
    "id": "interencheres:89366096",
@@ -18225,7 +18282,10 @@
    "premiere_vue": "2026-10-19",
    "prix_max_conseille": 15500,
    "score": 74,
-   "derniere_vue": "2026-10-19"
+   "derniere_vue": "2026-10-19",
+   "vendu": true,
+   "prix_adjuge": 180,
+   "adjuge_le": "2026-10-19"
   },
   "interencheres:89398570": {
    "id": "interencheres:89398570",
@@ -18253,7 +18313,10 @@
    "premiere_vue": "2026-10-19",
    "prix_max_conseille": 15500,
    "score": 43,
-   "derniere_vue": "2026-10-19"
+   "derniere_vue": "2026-10-19",
+   "vendu": true,
+   "prix_adjuge": 14400,
+   "adjuge_le": "2026-10-19"
   },
   "interencheres:89321749": {
    "id": "interencheres:89321749",
@@ -18281,7 +18344,10 @@
    "premiere_vue": "2026-10-14",
    "prix_max_conseille": 17800,
    "score": 29,
-   "derniere_vue": "2026-10-19"
+   "derniere_vue": "2026-10-19",
+   "vendu": true,
+   "prix_adjuge": 32200,
+   "adjuge_le": "2026-10-19"
   },
   "interencheres:89322081": {
    "id": "interencheres:89322081",
@@ -18309,7 +18375,10 @@
    "premiere_vue": "2026-10-14",
    "prix_max_conseille": 17800,
    "score": 10,
-   "derniere_vue": "2026-10-19"
+   "derniere_vue": "2026-10-19",
+   "vendu": false,
+   "prix_adjuge": null,
+   "adjuge_le": "2026-10-19"
   },
   "interencheres:89322107": {
    "id": "interencheres:89322107",
@@ -18337,7 +18406,10 @@
    "premiere_vue": "2026-10-14",
    "prix_max_conseille": 17800,
    "score": 31,
-   "derniere_vue": "2026-10-19"
+   "derniere_vue": "2026-10-19",
+   "vendu": true,
+   "prix_adjuge": 20600,
+   "adjuge_le": "2026-10-19"
   },
   "interencheres:89322135": {
    "id": "interencheres:89322135",
@@ -18365,7 +18437,10 @@
    "premiere_vue": "2026-10-14",
    "prix_max_conseille": 17800,
    "score": 67,
-   "derniere_vue": "2026-10-19"
+   "derniere_vue": "2026-10-19",
+   "vendu": true,
+   "prix_adjuge": 12600,
+   "adjuge_le": "2026-10-19"
   },
   "interencheres:89322145": {
    "id": "interencheres:89322145",
@@ -18393,7 +18468,10 @@
    "premiere_vue": "2026-10-14",
    "prix_max_conseille": 17800,
    "score": 69,
-   "derniere_vue": "2026-10-19"
+   "derniere_vue": "2026-10-19",
+   "vendu": true,
+   "prix_adjuge": 11900,
+   "adjuge_le": "2026-10-19"
   },
   "interencheres:89322250": {
    "id": "interencheres:89322250",
@@ -18421,7 +18499,10 @@
    "premiere_vue": "2026-10-14",
    "prix_max_conseille": 17800,
    "score": 54,
-   "derniere_vue": "2026-10-19"
+   "derniere_vue": "2026-10-19",
+   "vendu": true,
+   "prix_adjuge": 15900,
+   "adjuge_le": "2026-10-19"
   },
   "interencheres:89322252": {
    "id": "interencheres:89322252",
@@ -18449,7 +18530,10 @@
    "premiere_vue": "2026-10-14",
    "prix_max_conseille": 17800,
    "score": 25,
-   "derniere_vue": "2026-10-19"
+   "derniere_vue": "2026-10-19",
+   "vendu": true,
+   "prix_adjuge": 30100,
+   "adjuge_le": "2026-10-19"
   },
   "interencheres:89322256": {
    "id": "interencheres:89322256",
@@ -18477,7 +18561,10 @@
    "premiere_vue": "2026-10-14",
    "prix_max_conseille": 17800,
    "score": 30,
-   "derniere_vue": "2026-10-19"
+   "derniere_vue": "2026-10-19",
+   "vendu": true,
+   "prix_adjuge": 34000,
+   "adjuge_le": "2026-10-19"
   },
   "interencheres:89322566": {
    "id": "interencheres:89322566",
@@ -18505,7 +18592,10 @@
    "premiere_vue": "2026-10-14",
    "prix_max_conseille": 17800,
    "score": 65,
-   "derniere_vue": "2026-10-19"
+   "derniere_vue": "2026-10-19",
+   "vendu": true,
+   "prix_adjuge": 17400,
+   "adjuge_le": "2026-10-19"
   },
   "interencheres:89322567": {
    "id": "interencheres:89322567",
@@ -18533,7 +18623,10 @@
    "premiere_vue": "2026-10-14",
    "prix_max_conseille": 17800,
    "score": 86,
-   "derniere_vue": "2026-10-19"
+   "derniere_vue": "2026-10-19",
+   "vendu": true,
+   "prix_adjuge": 15800,
+   "adjuge_le": "2026-10-19"
   },
   "interencheres:89378865": {
    "id": "interencheres:89378865",
@@ -18561,7 +18654,10 @@
    "premiere_vue": "2026-10-19",
    "prix_max_conseille": 15500,
    "score": 76,
-   "derniere_vue": "2026-10-19"
+   "derniere_vue": "2026-10-19",
+   "vendu": true,
+   "prix_adjuge": 9100,
+   "adjuge_le": "2026-10-19"
   },
   "interencheres:89378875": {
    "id": "interencheres:89378875",
@@ -18589,7 +18685,10 @@
    "premiere_vue": "2026-10-19",
    "prix_max_conseille": 15500,
    "score": 28,
-   "derniere_vue": "2026-10-19"
+   "derniere_vue": "2026-10-19",
+   "vendu": true,
+   "prix_adjuge": 21600,
+   "adjuge_le": "2026-10-19"
   },
   "interencheres:89378939": {
    "id": "interencheres:89378939",
@@ -18617,7 +18716,10 @@
    "premiere_vue": "2026-10-19",
    "prix_max_conseille": 15500,
    "score": 31,
-   "derniere_vue": "2026-10-19"
+   "derniere_vue": "2026-10-19",
+   "vendu": true,
+   "prix_adjuge": 27300,
+   "adjuge_le": "2026-10-19"
   },
   "interencheres:89378950": {
    "id": "interencheres:89378950",
@@ -18645,7 +18747,10 @@
    "premiere_vue": "2026-10-19",
    "prix_max_conseille": 15500,
    "score": 29,
-   "derniere_vue": "2026-10-19"
+   "derniere_vue": "2026-10-19",
+   "vendu": false,
+   "prix_adjuge": null,
+   "adjuge_le": "2026-10-19"
   },
   "interencheres:89378991": {
    "id": "interencheres:89378991",
@@ -18673,7 +18778,10 @@
    "premiere_vue": "2026-10-19",
    "prix_max_conseille": 15500,
    "score": 66,
-   "derniere_vue": "2026-10-19"
+   "derniere_vue": "2026-10-19",
+   "vendu": true,
+   "prix_adjuge": 6300,
+   "adjuge_le": "2026-10-19"
   },
   "interencheres:89379065": {
    "id": "interencheres:89379065",
@@ -18701,7 +18809,10 @@
    "premiere_vue": "2026-10-19",
    "prix_max_conseille": 15500,
    "score": 68,
-   "derniere_vue": "2026-10-19"
+   "derniere_vue": "2026-10-19",
+   "vendu": true,
+   "prix_adjuge": 10300,
+   "adjuge_le": "2026-10-19"
   },
   "interencheres:89379090": {
    "id": "interencheres:89379090",
@@ -18729,7 +18840,10 @@
    "premiere_vue": "2026-10-19",
    "prix_max_conseille": 15500,
    "score": 30,
-   "derniere_vue": "2026-10-19"
+   "derniere_vue": "2026-10-19",
+   "vendu": true,
+   "prix_adjuge": 19000,
+   "adjuge_le": "2026-10-19"
   },
   "interencheres:89274016": {
    "id": "interencheres:89274016",
@@ -19163,7 +19277,10 @@
    "prix_max_conseille": 15500,
    "score": 25,
    "derniere_vue": "2026-10-19",
-   "retire": true
+   "retire": true,
+   "vendu": true,
+   "prix_adjuge": 12600,
+   "adjuge_le": "2026-10-19"
   },
   "interencheres:89321733": {
    "id": "interencheres:89321733",
