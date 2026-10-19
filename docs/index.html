@@ -98,6 +98,7 @@ button.reset{margin-left:auto;font:inherit;font-size:13px;border:1px solid var(-
   </div>
   <div class="outils">
     <button class="chip" id="chipfav" type="button" aria-pressed="false">★ Mes favoris</button>
+    <button class="chip" id="chiphisto" type="button" aria-pressed="false">📜 Ventes passées</button>
     <button type="button" id="exportfav">⬇ Exporter mes favoris</button>
     <button type="button" id="importfav">⬆ Importer des favoris</button>
     <input type="file" id="fichierfav" accept="application/json,.json" hidden>
@@ -131,6 +132,7 @@ const resume = l => ({id:l.id, titre:l.titre, url:l.url, site:l.site, date_vente
   prix:l.prix ?? null, mise_a_prix:l.mise_a_prix ?? null, prix_max_conseille:l.prix_max_conseille ?? null});
 const joursAvant = s => s ? Math.round((new Date(s + 'T12:00:00') - new Date(ilYa(0) + 'T12:00:00')) / 864e5) : null;
 let DATA = null;
+let HISTO = null;                  // ventes passées (historique.json), chargé à la demande
 
 function depuis(iso){
   const m = Math.round((Date.now() - new Date(iso)) / 60000);
@@ -253,22 +255,27 @@ function rendre(){
   ecrire(f);
   const solo = $('#chipfav').classList.contains('on');
   // mode favoris : tous les favoris, filtres ignorés (un lot qui dépasse ton budget reste visible)
-  const lots = solo ? trier(ALL.filter(l => FAVS[l.id]), f) : trier(DATA.lots.filter(l => garde(l, f)), f);
-  const retires = solo ? Object.values(FAVS).filter(r => !ALL.some(l => l.id === r.id)) : [];
+  const histo = $('#chiphisto').classList.contains('on') && HISTO;
+  const lots = histo ? trier(HISTO.filter(l => garde(l, {...f, avenir:false})).map(l => ({...l, prix_type:'dernière enchère vue'})), {...f, tri:f.tri === 'nouveaute' ? 'date_vente' : f.tri, ordre:f.tri === 'nouveaute' ? 'desc' : f.ordre})
+    : solo ? trier(ALL.filter(l => FAVS[l.id]), f) : trier(DATA.lots.filter(l => garde(l, f)), f);
+  const retires = solo && !histo ? Object.values(FAVS).filter(r => !ALL.some(l => l.id === r.id)) : [];
   $('#liste').innerHTML = lots.slice(0, 400).map(carte).join('') + retires.map(carteRetiree).join('')
     || `<div class="empty">${solo ? 'Aucun favori : clique sur ☆ sur une carte.' : 'Aucun lot ne correspond à ces filtres.'}</div>`;
   $('#chipfav').textContent = `★ Mes favoris (${Object.keys(FAVS).length})`;
   const nouveaux = DATA.lots.filter(estNouveau).length;
   const modifs = DATA.lots.filter(variation).length;
   const nfav = Object.keys(FAVS).length;
-  $('#bar').innerHTML = `<strong>${lots.length + retires.length}</strong> affiché(s) sur ${solo ? Object.keys(FAVS).length : DATA.lots.length}`
+  $('#bar').innerHTML = `<strong>${lots.length + retires.length}</strong> affiché(s) sur ${histo ? HISTO.length + ' ventes passées' : solo ? Object.keys(FAVS).length : DATA.lots.length}`
     + (nfav ? ` · ★ ${nfav} favori(s)` : '')
     + (nouveaux ? ` · ${nouveaux} nouveau(x)` : '') + (modifs ? ` · ${modifs} prix modifié(s)` : '');
 }
 
+const EXCLUS = ["c-zero", "2008", "smart", "dacia", "fiat", "zoe", "corsa", "mokka", "twingo", "t03"];
+const exclu = l => { const t = (l.texte || '').toLowerCase(); return EXCLUS.some(m => t.includes(m)); };
+
 function exclusion(data) {
-  if(!data) return
-  return {...data, lots : data.lots.filter((d) => !(d.texte || '').toLowerCase().includes("c-zero") && !d.texte.toLowerCase().includes("2008") && !d.texte.toLowerCase().includes("smart") && !d.texte.toLowerCase().includes("dacia") && !d.texte.toLowerCase().includes("fiat" ) && !d.texte.toLowerCase().includes("zoe") && !d.texte.toLowerCase().includes("corsa") && !d.texte.toLowerCase().includes("mokka"))}
+  if (!data) return;
+  return {...data, lots: data.lots.filter(l => !exclu(l))};
 }
 
 async function charger(){
@@ -301,6 +308,14 @@ async function charger(){
     if (FAVS[id]) delete FAVS[id]; else FAVS[id] = l ? resume(l) : {id};
     ecrirefavs(); rendre();
   });
+  $('#chiphisto').onclick = async () => {
+    const c = $('#chiphisto'); const on = !c.classList.contains('on');
+    if (on && !HISTO) {
+      try { HISTO = Object.values((await (await fetch('historique.json?t=' + Date.now(), {cache:'no-store'})).json()).lots).filter(l => !exclu(l)); }
+      catch { alert('historique.json introuvable.'); return; }
+    }
+    c.classList.toggle('on', on); c.setAttribute('aria-pressed', on); rendre();
+  };
   $('#chipfav').onclick = () => { const c = $('#chipfav'); const on = !c.classList.contains('on'); c.classList.toggle('on', on); c.setAttribute('aria-pressed', on); rendre(); };
   $('#exportfav').onclick = () => {
     const favoris = Object.values(FAVS).map(r => { const l = ALL.find(x => x.id === r.id); return l ? resume(l) : r; });

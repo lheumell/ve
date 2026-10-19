@@ -38,8 +38,8 @@ if [ "$avant" -gt 0 ] && [ $((apres * 2)) -lt "$avant" ]; then
   exit 1
 fi
 
-if [ -n "$(git status --porcelain docs/lots.json)" ]; then
-  git add docs/lots.json
+if [ -n "$(git status --porcelain docs/lots.json docs/historique.json)" ]; then
+  git add docs/lots.json docs/historique.json
   git commit -q -m "lots $(date '+%Y-%m-%d %H:%M')"
   git push -q
   echo "publié ($apres lots)"

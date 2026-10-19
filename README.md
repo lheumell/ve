@@ -83,7 +83,15 @@ Le premier lancement initialise l'état sans rien envoyer. Test : `python notify
 Le score (0-100) pèse coût frais compris (50), km (15), année (10), SoH (15), batterie (10) ;
 `BUDGET` en haut de `build_site.py` règle le budget et le prix max conseillé.
 
-## 7. Quand un site ne remonte rien
+## 7. Prix d'adjudication (statistiques)
+
+Alcopa n'affiche pas le prix final, Interenchères si — mais seulement le jour de la vente (la page du
+lot renvoie 410 quelques jours après). `resultats.sh` tourne chaque jour à 16h45 (cron), ouvre les lots
+Interenchères vendus le jour même (`historique.json`) et y ajoute `vendu`, `prix_adjuge` (hors frais) et
+`adjuge_le`. Un lot sans résultat au passage de 16h45 (vente pas finie) n'est pas marqué : `./resultats.sh` relancé le soir même le complète.
+Test sans écriture : `python resultats.py --dry-run [--date AAAA-MM-JJ]`.
+
+## 8. Quand un site ne remonte rien
 
 ```bash
 ./publish.sh --debug --visible

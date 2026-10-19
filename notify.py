@@ -27,7 +27,7 @@ SEUIL_PRIX = 200
 RAPPELS = (3, 1, 0)           # jours avant la vente
 MAX_NOUVEAUX = 8              # au-delà, un seul message récapitulatif
 # Mêmes modèles écartés que dans docs/index.html (exclusion()).
-EXCLUS = ("c-zero", "2008", "smart", "dacia", "fiat", "zoe", "corsa", "mokka")
+EXCLUS = ("c-zero", "2008", "smart", "dacia", "fiat", "zoe", "corsa", "mokka", "twingo", "t03")
 
 
 def charger_json(chemin, defaut):

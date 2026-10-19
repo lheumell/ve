@@ -34,6 +34,22 @@ def historiser(lots, precedents, aujourdhui):
             l.pop("prix_precedent"); l.pop("prix_change_le")
 
 
+def archiver(lots, precedents, archive, aujourdhui):
+    """Garde la trace des ventes passées dans docs/historique.json ({id: lot}).
+    Un lot y entre quand sa date de vente est atteinte, ou quand il disparaît du catalogue ; on y conserve
+    la dernière valeur vue (« prix » = dernière enchère observée) ; le prix d'adjudication relevé par resultats.py
+    (vendu, prix_adjuge, adjuge_le) est conservé."""
+    presents = {l["id"] for l in lots}
+    for l in lots:
+        if l.get("date_vente") and l["date_vente"] <= aujourdhui and not l.get("perime"):
+            resultat = {k: archive[l["id"]][k] for k in ("vendu", "prix_adjuge", "adjuge_le") if k in archive.get(l["id"], {})}
+            archive[l["id"]] = {**l, **resultat, "derniere_vue": aujourdhui}      # resultats.py ajoute le prix adjugé
+    for p in precedents:
+        if p["id"] not in presents and p["id"] not in archive:
+            archive[p["id"]] = {**p, "derniere_vue": aujourdhui, "retire": True}
+    return archive
+
+
 # Budget total visé, frais de vente compris (+ carte grise si CARTE_GRISE > 0). À ajuster.
 BUDGET = 18000
 CARTE_GRISE = 0
@@ -120,6 +136,17 @@ def main():
     }
     sortie.parent.mkdir(parents=True, exist_ok=True)
     sortie.write_text(json.dumps(charge, ensure_ascii=False, indent=1), encoding="utf-8")
+
+    fichier_histo = sortie.with_name("historique.json")
+    archive = {}
+    if fichier_histo.exists():
+        try:
+            archive = json.loads(fichier_histo.read_text(encoding="utf-8")).get("lots", {})
+        except ValueError:
+            pass
+    archive = archiver(lots, precedents, archive, dt.date.today().isoformat())
+    fichier_histo.write_text(json.dumps({"genere_le": charge["genere_le"], "lots": archive},
+                                        ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"\n{len(lots)} lots → {sortie}  {comptes}")
 
 
