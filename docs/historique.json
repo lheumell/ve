@@ -19888,7 +19888,10 @@
    "premiere_vue": "2026-10-15",
    "prix_max_conseille": 15500,
    "score": 29,
-   "derniere_vue": "2026-10-20"
+   "derniere_vue": "2026-10-20",
+   "vendu": true,
+   "prix_adjuge": 27300,
+   "adjuge_le": "2026-10-20"
   },
   "interencheres:89355742": {
    "id": "interencheres:89355742",
@@ -19916,7 +19919,10 @@
    "premiere_vue": "2026-10-15",
    "prix_max_conseille": 15500,
    "score": 29,
-   "derniere_vue": "2026-10-20"
+   "derniere_vue": "2026-10-20",
+   "vendu": true,
+   "prix_adjuge": 26900,
+   "adjuge_le": "2026-10-20"
   },
   "alcopa:1130562": {
    "id": "alcopa:1130562",
