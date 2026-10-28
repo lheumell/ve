@@ -29754,7 +29754,10 @@
    "premiere_vue": "2026-10-28",
    "prix_max_conseille": 15500,
    "score": 56,
-   "derniere_vue": "2026-10-28"
+   "derniere_vue": "2026-10-28",
+   "vendu": false,
+   "prix_adjuge": null,
+   "adjuge_le": "2026-10-28"
   },
   "interencheres:89560957": {
    "id": "interencheres:89560957",
