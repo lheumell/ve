@@ -38067,7 +38067,10 @@
    "premiere_vue": "2026-10-19",
    "prix_max_conseille": 15500,
    "score": 13,
-   "derniere_vue": "2026-11-03"
+   "derniere_vue": "2026-11-03",
+   "vendu": true,
+   "prix_adjuge": 21000,
+   "adjuge_le": "2026-11-03"
   },
   "vpauto:VS00032MV2603456": {
    "id": "vpauto:VS00032MV2603456",
