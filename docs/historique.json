@@ -47974,7 +47974,10 @@
    "premiere_vue": "2026-11-12",
    "prix_max_conseille": 17800,
    "score": 19,
-   "derniere_vue": "2026-11-13"
+   "derniere_vue": "2026-11-13",
+   "vendu": true,
+   "prix_adjuge": 28500,
+   "adjuge_le": "2026-11-13"
   },
   "interencheres:89814147": {
    "id": "interencheres:89814147",
