@@ -54592,7 +54592,10 @@
    "premiere_vue": "2026-11-16",
    "prix_max_conseille": 15500,
    "score": 74,
-   "derniere_vue": "2026-11-22"
+   "derniere_vue": "2026-11-22",
+   "vendu": true,
+   "prix_adjuge": 170,
+   "adjuge_le": "2026-11-22"
   },
   "interencheres:89933056": {
    "id": "interencheres:89933056",
